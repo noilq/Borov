@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../database')
-const crypto = require('crypto');
+const crypto = require('crypto')
 const { body, validationResult } = require('express-validator');
 
 //const body('password_hash') = body('password_hash').trim().slice(0, 256); 
@@ -32,17 +32,20 @@ router.post('/create', createUserValidationChain, (req, res) => {
     const validationErrors = validationResult(req)
 
     if (!validationErrors.isEmpty()) {
-        return res.status(400).json({ errors: validationErrors.array() });
+        return res.status(400).json({ errors: validationErrors.array() })
     }
 
     const userData = req.body
 
-    userData.password_hash = crypto.createHash('md5').update(userData.password_hash).digest('hex');
+    userData.password_hash = crypto.createHash('md5').update(userData.password_hash).digest('hex')
     const sql = `INSERT INTO users (login, password_hash, name, description) VALUES (?, ?, ?, ?)`
 
     db.query(sql, [userData.login, userData.password_hash, userData.name, userData.description], (err, result) => {
-        if(err) 
+        if(err) {
+            if(err.errno == 1062)
+                return res.json({ error: 'Login is already taken by someone.' })
             return res.json(err)
+        }
         return res.json(result)
     })
 })
