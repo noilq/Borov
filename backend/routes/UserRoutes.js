@@ -50,4 +50,31 @@ router.post('/create', createUserValidationChain, (req, res) => {
     })
 })
 
+router.post('/login', (req, res) => {
+    const login = req.body.login
+    let password_hash = req.body.password_hash
+
+    const sql = `SELECT * FROM users WHERE login = ?`
+
+    db.query(sql, [login], (err, result) => {
+        if(err) {
+            return res.status(500).json({ error: 'Database error.'})
+        }
+ 
+        if(result.length === 0){
+            return res.status(400).json({ error: 'Invalid login.'})
+        }
+
+        const dbpassword_hash = result[0].password_hash
+
+        password_hash = crypto.createHash('md5').update(password_hash).digest('hex') 
+
+        if (dbpassword_hash !== password_hash) {
+            return res.status(400).json({ error: 'Invalid password.' })
+        }
+
+        return res.status(200).json({ success: 'Login successful.' });
+    })
+})
+
 module.exports = router
