@@ -50,17 +50,18 @@ router.post('/create', createUserValidationChain, (req, res) => {
 })
 
 router.get('/login', (req, res) => {
-    //res.status(200).render("../frontend/login");
-    var path_ = __dirname.substring(0, __dirname.lastIndexOf('\\'))
-    const pat = (__dirname.substring(0, __dirname.lastIndexOf('\\')))
-    console.log("__dirname: " + __dirname)
+    require("fs").readFile(path.join(__dirname, "../../frontend/views/login.html"), function (err, data) {
+            if(err) console.error(err);
+        else{
+            res.end(data)
+            console.log(data);
+        }
+    })
+});
 
-    console.log(pat + '\\views\\login.html')
-    //console.log(process.cwd());
-    //res.sendFile(pat + '\\views\\login.html')
-
-    require("fs").readFile(pat + '\\views\\login.html', function (err, data) {
-        if(err) console.error(err);
+router.get('/registration', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/views/registration.html"), function (err, data) {
+            if(err) console.error(err);
         else{
             res.end(data)
             console.log(data);
