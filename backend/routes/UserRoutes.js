@@ -2,9 +2,11 @@ const express = require('express')
 const router = express.Router()
 const db = require('../database')
 const crypto = require('crypto');
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
+const path = require('path')
 
-//const body('password_hash') = body('password_hash').trim().slice(0, 256); 
+
+//const body('password_hash') = 
 const createUserValidationChain = [
     body('login')
         .isLength({ min: 4, max: 32}).withMessage('Login must be between 4-32 characters.')
@@ -46,5 +48,24 @@ router.post('/create', createUserValidationChain, (req, res) => {
         return res.json(result)
     })
 })
+
+router.get('/login', (req, res) => {
+    //res.status(200).render("../frontend/login");
+    var path_ = __dirname.substring(0, __dirname.lastIndexOf('\\'))
+    const pat = (__dirname.substring(0, __dirname.lastIndexOf('\\')))
+    console.log("__dirname: " + __dirname)
+
+    console.log(pat + '\\views\\login.html')
+    //console.log(process.cwd());
+    //res.sendFile(pat + '\\views\\login.html')
+
+    require("fs").readFile(pat + '\\views\\login.html', function (err, data) {
+        if(err) console.error(err);
+        else{
+            res.end(data)
+            console.log(data);
+        }
+    })
+});
 
 module.exports = router
