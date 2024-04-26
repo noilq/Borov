@@ -19,6 +19,15 @@ const createUserValidationChain = () => [
         .isLength({ max: 500}).withMessage('Description must be at most 500 characters long.')
 ]
 
+const loginUserValidationChain = () => [
+    body('login')
+        .isLength({ min: 4, max: 32}).withMessage('Invalid login.')
+        .matches(/^[a-zA-Z0-9]+$/).withMessage('Invalid login.'),
+    body('password_hash')
+        .isLength({ min: 8}).withMessage('Invalid password.')
+        .custom(value => !/\s/.test(value)).withMessage('Invalid password.')
+]
+
 router.get('/', (req, res) => {
     const sql = 'SELECT * FROM users'
     db.query(sql, (err, data) => {
@@ -60,7 +69,13 @@ router.get('/registration', (req, res) => {
     })
 })
 
-router.post('/login', (req, res) => {
+router.post('/login', loginUserValidationChain(),(req, res) => {
+    const validationErrors = validationResult(req)
+
+    if (!validationErrors.isEmpty()) {
+        return res.status(400).json({ errors: validationErrors.array() })
+    }
+
     const login = req.body.login
     let password_hash = req.body.password_hash
 
@@ -72,7 +87,7 @@ router.post('/login', (req, res) => {
         }
  
         if(result.length === 0){
-            return res.status(400).json({ error: 'Invalid login.'})
+            return res.status(400).json({ error: 'Account does not exist.'})
         }
 
         const dbpassword_hash = result[0].password_hash
@@ -80,7 +95,7 @@ router.post('/login', (req, res) => {
         password_hash = crypto.createHash('md5').update(password_hash).digest('hex') 
 
         if (dbpassword_hash !== password_hash) {
-            return res.status(400).json({ error: 'Invalid password.' })
+            return res.status(400).json({ error: 'Wrong password. Please try again.' })
         }
 
         return res.status(200).json({ success: 'Login successful.' })
