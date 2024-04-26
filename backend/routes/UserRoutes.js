@@ -5,8 +5,7 @@ const crypto = require('crypto');
 const { body, validationResult } = require('express-validator')
 const path = require('path')
 
-//const body('password_hash') = 
-const createUserValidationChain = [
+const createUserValidationChain = () => [
     body('login')
         .isLength({ min: 4, max: 32}).withMessage('Login must be between 4-32 characters.')
         .matches(/^[a-zA-Z0-9]+$/).withMessage('Login must contain only letters and numbers.'),
@@ -29,7 +28,7 @@ router.get('/', (req, res) => {
     })
 })
 
-router.post('/create', createUserValidationChain, (req, res) => {
+router.post('/create', createUserValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
     if (!validationErrors.isEmpty()) {
@@ -51,16 +50,6 @@ router.post('/create', createUserValidationChain, (req, res) => {
     })
 })
 
-router.get('/login', (req, res) => {
-    require("fs").readFile(path.join(__dirname, "../../frontend/views/login.html"), function (err, data) {
-            if(err) console.error(err);
-        else{
-            res.end(data)
-            console.log(data);
-        }
-    })
-});
-
 router.get('/registration', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/views/registration.html"), function (err, data) {
             if(err) console.error(err);
@@ -69,7 +58,8 @@ router.get('/registration', (req, res) => {
         
         }
     })
-});
+})
+
 router.post('/login', (req, res) => {
     const login = req.body.login
     let password_hash = req.body.password_hash
@@ -93,7 +83,16 @@ router.post('/login', (req, res) => {
             return res.status(400).json({ error: 'Invalid password.' })
         }
 
-        return res.status(200).json({ success: 'Login successful.' });
+        return res.status(200).json({ success: 'Login successful.' })
+    })
+})
+
+router.get('/login', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/views/login.html"), function (err, data) {
+            if(err) console.error(err)
+        else{
+            res.end(data)
+        }
     })
 })
 
