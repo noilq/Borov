@@ -64,7 +64,7 @@ router.get('/registration', (req, res) => {
             if(err) console.error(err);
         else{
             res.end(data)
-            console.log(data);
+        
         }
     })
 });
