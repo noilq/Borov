@@ -1,10 +1,11 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../database')
-const crypto = require('crypto')
-const { body, validationResult } = require('express-validator');
+const crypto = require('crypto');
+const { body, validationResult } = require('express-validator')
+const path = require('path')
 
-//const body('password_hash') = body('password_hash').trim().slice(0, 256); 
+//const body('password_hash') = 
 const createUserValidationChain = [
     body('login')
         .isLength({ min: 4, max: 32}).withMessage('Login must be between 4-32 characters.')
@@ -50,6 +51,25 @@ router.post('/create', createUserValidationChain, (req, res) => {
     })
 })
 
+router.get('/login', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/views/login.html"), function (err, data) {
+            if(err) console.error(err);
+        else{
+            res.end(data)
+            console.log(data);
+        }
+    })
+});
+
+router.get('/registration', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/views/registration.html"), function (err, data) {
+            if(err) console.error(err);
+        else{
+            res.end(data)
+        
+        }
+    })
+});
 router.post('/login', (req, res) => {
     const login = req.body.login
     let password_hash = req.body.password_hash
