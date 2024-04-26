@@ -4,7 +4,7 @@
 
 const express = require('express')
 const path = require('path')
-const { body, validationResult, check } = require('express-validator');
+const { body, validationResult, check } = require('express-validator')
 
 //npm run serve - скрипт перекомпилирует программу после сохранения кода
 

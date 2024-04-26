@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const { body, validationResult } = require('express-validator')
 const path = require('path')
 
-
 //const body('password_hash') = 
 const createUserValidationChain = [
     body('login')
@@ -34,17 +33,20 @@ router.post('/create', createUserValidationChain, (req, res) => {
     const validationErrors = validationResult(req)
 
     if (!validationErrors.isEmpty()) {
-        return res.status(400).json({ errors: validationErrors.array() });
+        return res.status(400).json({ errors: validationErrors.array() })
     }
 
     const userData = req.body
 
-    userData.password_hash = crypto.createHash('md5').update(userData.password_hash).digest('hex');
+    userData.password_hash = crypto.createHash('md5').update(userData.password_hash).digest('hex')
     const sql = `INSERT INTO users (login, password_hash, name, description) VALUES (?, ?, ?, ?)`
 
     db.query(sql, [userData.login, userData.password_hash, userData.name, userData.description], (err, result) => {
-        if(err) 
+        if(err) {
+            if(err.errno == 1062)
+                return res.json({ error: 'Login is already taken by someone.' })
             return res.json(err)
+        }
         return res.json(result)
     })
 })
@@ -68,5 +70,31 @@ router.get('/registration', (req, res) => {
         }
     })
 });
+router.post('/login', (req, res) => {
+    const login = req.body.login
+    let password_hash = req.body.password_hash
+
+    const sql = `SELECT * FROM users WHERE login = ?`
+
+    db.query(sql, [login], (err, result) => {
+        if(err) {
+            return res.status(500).json({ error: 'Database error.'})
+        }
+ 
+        if(result.length === 0){
+            return res.status(400).json({ error: 'Invalid login.'})
+        }
+
+        const dbpassword_hash = result[0].password_hash
+
+        password_hash = crypto.createHash('md5').update(password_hash).digest('hex') 
+
+        if (dbpassword_hash !== password_hash) {
+            return res.status(400).json({ error: 'Invalid password.' })
+        }
+
+        return res.status(200).json({ success: 'Login successful.' });
+    })
+})
 
 module.exports = router
