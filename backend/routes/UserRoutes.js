@@ -34,7 +34,7 @@ router.get('/', (req, res) => {
     db.query(sql, (err, data) => {
         if (err) 
             return res.json(err)
-        return res.json(data)
+        res.json(data)
     })
 })
 
