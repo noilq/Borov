@@ -4,6 +4,7 @@ const db = require('../database')
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator')
 const path = require('path')
+const { verifyToken, generateToken }= require('../middleware/authjwt.js')
 
 const createUserValidationChain = () => [
     body('login')
@@ -98,6 +99,13 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
             return res.status(400).json({ error: 'Wrong password. Please try again.' })
         }
 
+        let rememberMe = true //replace later this
+        let token = null
+        if(rememberMe) {
+            token = generateToken( req.body.login )
+            return res.status(200).json({ success: 'Login successful.', token: token })
+        }
+
         return res.status(200).json({ success: 'Login successful.' })
     })
 })
@@ -109,6 +117,12 @@ router.get('/login', (req, res) => {
             res.end(data)
         }
     })
+})
+
+router.get('/protected', verifyToken, (req, res) => {
+    const login = req.user.login;
+
+    res.status(200).json( {success: 'Auth successful.'} )
 })
 
 module.exports = router
