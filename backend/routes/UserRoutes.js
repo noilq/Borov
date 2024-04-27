@@ -120,8 +120,8 @@ router.get('/login', (req, res) => {
 })
 
 router.get('/protected', verifyToken, (req, res) => {
-    const login = req.login;
-    
+    const login = req.user.login;
+
     res.status(200).json( {success: 'Auth successful.'} )
 })
 
