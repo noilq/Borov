@@ -1,0 +1,11 @@
+{
+  "source": {
+    "include": [
+      "backend/middleware/authjwt.js", 
+      "backend/routes/UserRoutes.js"
+    ]
+  },
+  "opts": {
+    "destination": "docs/backend"
+  }
+}

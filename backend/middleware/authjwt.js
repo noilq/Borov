@@ -2,6 +2,10 @@ const jwt = require('jsonwebtoken')
 //REALLY SECRET SECRETTOKEN, HAVE TO REPLACE IT AT SOME POINT
 const secretKey = "devSecretToken"
 
+
+/**
+ * Middleware function to verify JWT token.
+ */
 function verifyToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -15,6 +19,11 @@ function verifyToken(req, res, next) {
     })
 }
 
+/**
+ * Middleware function to generate JWT token.
+ * @param {string} login The user login.
+ * @returns {string} The generated JWT token.
+ */
 function generateToken(login) {
     const iat = new Date().getTime() / 1000
     const exp = iat + 3600 //increase by hour
