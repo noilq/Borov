@@ -100,10 +100,12 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
         }
 
         let rememberMe = true //replace later this
-        let token = null
+        let accesToken = null
+        let refreshToken = null
         if(rememberMe) {
-            token = generateToken( req.body.login )
-            return res.status(200).json({ success: 'Login successful.', token: token })
+            accesToken = generateToken( req.body.login, 20 )
+            refreshToken = generateToken( req.body.login, 604800 )
+            return res.cookie('refreshToken', refreshToken).header('Authorization', accesToken).json( {success: 'Login successful.'} )
         }
 
         return res.status(200).json({ success: 'Login successful.' })
@@ -120,7 +122,7 @@ router.get('/login', (req, res) => {
 })
 
 router.get('/protected', verifyToken, (req, res) => {
-    const login = req.user.login;
+    const login = req.user
 
     res.status(200).json( {success: 'Auth successful.'} )
 })
