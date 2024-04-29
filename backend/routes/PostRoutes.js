@@ -41,4 +41,19 @@ router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     })
 })
 
+router.post('/delete', verifyToken, (req, res) => {
+    const postId = req.body.postId
+    
+    const user = req.user
+    
+    const sql = 'DELETE FROM posts WHERE id = ?;'
+
+    db.query(sql, [postId], (err, result) => {
+        if(err)
+            return res.json(err)
+
+        return res.json(result)
+    })
+})
+
 module.exports = router
