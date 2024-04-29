@@ -31,9 +31,9 @@ router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     
     const user = req.user
     
-    const sql = `INSERT INTO posts (title, content, category_id) VALUES (?, ?, ?)`
+    const sql = `INSERT INTO posts (title, content, category_id, owner_id) VALUES (?, ?, ?, ?)`
 
-    db.query(sql, [postData.title, postData.content, postData.category_id], (err, result) => {
+    db.query(sql, [postData.title, postData.content, postData.category_id, user.userId], (err, result) => {
         if(err)
             return res.json(err)
 
