@@ -24,7 +24,7 @@ function verifyToken(req, res, next) {
             const payload = jwt.verify(refreshToken, secretKey)
             req.user = payload 
             
-            const newAccessToken = generateToken(payload.login, 1800)
+            const newAccessToken = generateToken(payload.userId, payload.login, 1800)
 
             return res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
         }catch(err){
@@ -35,14 +35,15 @@ function verifyToken(req, res, next) {
 
 /**
  * Middleware function to generate JWT token.
+ * @param {int} userId The user id.
  * @param {string} login The user login.
  * @param {int} expiredAt The time in seconds before expired.
  * @returns {string} The generated JWT token.
  */
-function generateToken(login, expiredAt) {
+function generateToken(userId, login, expiredAt) {
     const iat = new Date().getTime() / 1000
     const exp = iat + expiredAt //increase by hour
-    const payload = { login, iat, exp }
+    const payload = { userId, login, iat, exp }
     return jwt.sign(payload, secretKey)
 }
 
