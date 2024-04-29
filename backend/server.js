@@ -13,8 +13,10 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 const userRoutes = require('./routes/UserRoutes')
+const postRoutes = require('./routes/PostRoutes')
 
 app.use('/user', userRoutes)
+app.use('/post', postRoutes)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)

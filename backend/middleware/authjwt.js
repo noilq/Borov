@@ -17,7 +17,7 @@ function verifyToken(req, res, next) {
     try{
         const payload = jwt.verify(accessToken, secretKey)
         req.user = payload
-        console.log('kajf')
+        
         next()
     }catch(err){
         try{
