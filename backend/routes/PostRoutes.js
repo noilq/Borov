@@ -20,7 +20,7 @@ router.get('/', verifyToken, (req, res) => {
         res.json(data)
     })
 })
-
+    
 router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 

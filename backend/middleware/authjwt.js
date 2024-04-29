@@ -20,17 +20,22 @@ function verifyToken(req, res, next) {
         
         next()
     }catch(err){
-        try{
-            const payload = jwt.verify(refreshToken, secretKey)
-            req.user = payload 
-            
-            const newAccessToken = generateToken(payload.userId, payload.login, 1800)
-
-            res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
-            next()
-        }catch(err){
-            return res.status(401).json({ error: 'Invalid token.'})
+        if(err.name === 'TokenExpiredError' && refreshToken){
+            try{
+                const payload = jwt.verify(refreshToken, secretKey)
+                req.user = payload 
+                
+                const newAccessToken = generateToken(payload.userId, payload.login, 1800)
+    
+                res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
+                next()
+            }catch(err){
+                return res.status(401).json({ error: 'Invalid token.'})
+            }
+        }else{
+            return res.status(401).json({ error: 'Error while validating token.'})
         }
+        
     }
 }
 
