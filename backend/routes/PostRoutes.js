@@ -20,7 +20,7 @@ router.get('/', verifyToken, (req, res) => {
         res.json(data)
     })
 })
-    
+
 router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -30,7 +30,7 @@ router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     const postData = req.body
     
     const user = req.user
-    
+
     const sql = `INSERT INTO posts (title, content, category_id, owner_id) VALUES (?, ?, ?, ?)`
 
     db.query(sql, [postData.title, postData.content, postData.category_id, user.userId], (err, result) => {
@@ -45,8 +45,22 @@ router.post('/delete', verifyToken, (req, res) => {
     const postId = req.body.postId
     
     const user = req.user
+    let sql = 'SELECT * FROM posts WHERE id = ?'
     
-    const sql = 'DELETE FROM posts WHERE id = ?;'
+    db.query(sql, [postId], (err, result) => {
+        if(err)
+            return res.json(err)
+
+        if(result.length === 0)
+            return res.status(404).json({ error: 'Post not found.'})
+
+        const post = result[0]
+
+        if(!post == user.userId)
+            return res.status(404).json({ error: 'Now allowed.'})   
+    })
+    
+    sql = 'DELETE FROM posts WHERE id = ?;'
 
     db.query(sql, [postId], (err, result) => {
         if(err)
