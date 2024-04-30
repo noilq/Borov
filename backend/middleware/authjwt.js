@@ -17,32 +17,39 @@ function verifyToken(req, res, next) {
     try{
         const payload = jwt.verify(accessToken, secretKey)
         req.user = payload
-        console.log('kajf')
+        
         next()
     }catch(err){
-        try{
-            const payload = jwt.verify(refreshToken, secretKey)
-            req.user = payload 
-            
-            const newAccessToken = generateToken(payload.login, 1800)
-
-            return res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
-        }catch(err){
-            return res.status(401).json({ error: 'Invalid token.'})
+        if(err.name === 'TokenExpiredError' && refreshToken){
+            try{
+                const payload = jwt.verify(refreshToken, secretKey)
+                req.user = payload 
+                
+                const newAccessToken = generateToken(payload.userId, payload.login, 1800)
+    
+                res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
+                next()
+            }catch(err){
+                return res.status(401).json({ error: 'Invalid token.'})
+            }
+        }else{
+            return res.status(401).json({ error: 'Error while validating token.'})
         }
+        
     }
 }
 
 /**
  * Middleware function to generate JWT token.
+ * @param {int} userId The user id.
  * @param {string} login The user login.
  * @param {int} expiredAt The time in seconds before expired.
  * @returns {string} The generated JWT token.
  */
-function generateToken(login, expiredAt) {
+function generateToken(userId, login, expiredAt) {
     const iat = new Date().getTime() / 1000
     const exp = iat + expiredAt //increase by hour
-    const payload = { login, iat, exp }
+    const payload = { userId, login, iat, exp }
     return jwt.sign(payload, secretKey)
 }
 
