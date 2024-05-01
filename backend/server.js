@@ -14,9 +14,11 @@ app.use(cookieParser())
 
 const userRoutes = require('./routes/UserRoutes')
 const postRoutes = require('./routes/PostRoutes')
+const commentRoutes = require('./routes/CommentRoutes')
 
 app.use('/user', userRoutes)
 app.use('/post', postRoutes)
+app.use('/comment', commentRoutes)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)
