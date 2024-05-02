@@ -11,6 +11,19 @@ const commentValidationChain = () => [
         .isLength({ min: 0, max: 2500}).withMessage('Content must be less than 1000 characters long')
 ]
 
+router.get('/', verifyToken, (req, res) => {
+    commId = req.query.id
+
+    const sql = 'SELECT * FROM comments WHERE id = ?'
+    db.query(sql, [commId], (err, result) => {
+        if (err) 
+            return res.json(err)
+        if (result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Comment not found.' })
+        res.json(result[0])
+    })
+})
+
 router.post('/create', verifyToken, commentValidationChain(), async (req, res) => {
     const validationErrors = validationResult(req)
 
