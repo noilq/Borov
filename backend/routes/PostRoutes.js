@@ -19,7 +19,7 @@ router.get('/', (req, res) => {
     db.query(sql, [postId], (err, result) => {
         if (err) 
             return res.json(err);
-        if (result.length === 0)
+        if (result.length == 0 || result[0].status_id == 3)
             return res.status(404).json({ error: 'Post not found.' });
         res.json(result[0])
     })
@@ -60,24 +60,24 @@ router.post('/edit', verifyToken, postValidationChain(), (req, res) => {
         if(err)
             return res.json(err)
 
-        if(result.length === 0)
+        if(result.length == 0 || result[0].status_id == 3)
             return res.status(404).json({ error: 'Post not found.'})
 
         post = result[0]
         
         if(!post == user.userId)
             return res.status(404).json({ error: 'Now allowed.'})   
-    })
-    
-    const newPostData = req.body
 
-    sql = 'UPDATE posts SET title = ?, content = ?, category_id = ? WHERE id = ?'
+        const newPostData = req.body
 
-    db.query(sql, [newPostData.title, newPostData.content, newPostData.category_id, postId], (err, result) => {
-        if(err)
-            return res.json(err)
-
-        return res.json(result)
+        sql = 'UPDATE posts SET title = ?, content = ?, category_id = ?, status_id = 2 WHERE id = ? AND owner_id = ?'
+        
+        db.query(sql, [newPostData.title, newPostData.content, newPostData.category_id, postId, user.userId], (err, result) => {
+            if(err)
+                return res.json(err)
+        
+            return res.json(result)
+        })
     })
 })
 
@@ -91,22 +91,22 @@ router.post('/delete', verifyToken, (req, res) => {
         if(err)
             return res.json(err)
 
-        if(result.length === 0)
+        if(result.length == 0 || result[0].status_id == 3)
             return res.status(404).json({ error: 'Post not found.'})
 
         const post = result[0]
 
         if(!post == user.userId)
             return res.status(404).json({ error: 'Now allowed.'})   
-    })
 
-    sql = 'DELETE FROM posts WHERE id = ?;'
+        sql = 'UPDATE posts SET status_id = 3 WHERE id = ? AND owner_id = ?;'
 
-    db.query(sql, [postId], (err, result) => {
-        if(err)
-            return res.json(err)
+        db.query(sql, [postId, user.userId], (err, result) => {
+            if(err)
+                return res.json(err)
 
-        return res.json(result)
+            return res.json(result)
+        })
     })
 })
 

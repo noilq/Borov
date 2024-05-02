@@ -121,9 +121,9 @@ router.post('/delete', verifyToken, (req, res) => {
         if(comm.owner_id !== user.userId)
             return res.status(404).json({ error: 'Now allowed.'})
 
-        sql = 'UPDATE comments SET status_id = 3 WHERE id = ?;'
+        sql = 'UPDATE comments SET status_id = 3 WHERE id = ? AND owner_id = ?;'
 
-        db.query(sql, [commId], (err, result) => {
+        db.query(sql, [commId, user.userId], (err, result) => {
             if(err)
                 return res.json(err)
         
