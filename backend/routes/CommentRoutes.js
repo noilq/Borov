@@ -53,6 +53,72 @@ router.post('/create', verifyToken, commentValidationChain(), async (req, res) =
     })
 })
 
+router.post('/edit', verifyToken, commentValidationChain(), (req, res) => {
+    const validationErrors = validationResult(req)
+
+    if(!validationErrors.isEmpty())
+        return res.status(400).json( { errors: validationErrors.array() })
+
+    const commId = req.query.id  
+    
+    const user = req.user
+    let sql = 'SELECT * FROM comments WHERE id = ?'
+
+    let isAllowed = true
+    db.query(sql, [commId], (err, result) => {
+        if(err)
+            return res.json(err)
+            
+        if(result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Comment not found.'})
+
+        comm = result[0]
+        
+        if(comm.owner_id !== user.userId)
+            return res.status(404).json({ error: 'Not allowed.'})    
+        
+        const newCommData = req.body
+
+        sql = 'UPDATE comments SET content = ?, status_id = 2 WHERE id = ? AND owner_id = ?'
+    
+        db.query(sql, [newCommData.content, commId, user.userId], (err, result) => {
+            if(err)
+                return res.json(err)
+            
+            return res.json(result)
+        })
+    })
+})
+
+router.post('/delete', verifyToken, (req, res) => {
+    const commId = req.query.id
+    
+    const user = req.user
+    let sql = 'SELECT * FROM comments WHERE id = ?'
+    
+    db.query(sql, [commId], (err, result) => {
+        if(err)
+            return res.json(err)
+
+        if(result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Comment not found.'})
+
+        const comm = result[0]
+
+        if(comm.owner_id !== user.userId)
+            return res.status(404).json({ error: 'Now allowed.'})
+
+        sql = 'UPDATE comments SET status_id = 3 WHERE id = ?;'
+
+        db.query(sql, [commId], (err, result) => {
+            if(err)
+                return res.json(err)
+        
+            return res.json(result)
+        })
+    })
+})
+
 async function PostExisting(postId) {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT COUNT(*) AS count FROM posts WHERE id = ?'
