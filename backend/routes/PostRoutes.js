@@ -12,7 +12,7 @@ const postValidationChain = () => [
         .isLength({ min: 0, max: 2500}).withMessage('Content must be less than 2500 characters long')
 ]
 
-router.get('/', verifyToken, (req, res) => {
+router.get('/', (req, res) => {
     const postId = req.query.id
 
     const sql = 'SELECT * FROM posts WHERE id = ?'
