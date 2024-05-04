@@ -14,16 +14,26 @@ const postValidationChain = () => [
 
 router.get('/', (req, res) => {
     const postId = req.query.id
-
-    const sql = 'SELECT * FROM posts WHERE id = ?'
-    db.query(sql, [postId], (err, result) => {
-        if (err) 
-            return res.json(err);
+    
+    GetPost(postId, (err, result) => {
+        if (err)
+            return res.status(500).json({ error: 'Database error.' })
         if (result.length == 0 || result[0].status_id == 3)
-            return res.status(404).json({ error: 'Post not found.' });
-        res.json(result[0])
+            return res.status(404).json({ error: 'Post not found.' })
+        res.json(result)
     })
 })
+
+function GetPost(id, callback){
+    const sql = `SELECT p.id, p.enrollment_date, p.title, p.content, SUM(v.value) AS score, p.status_id, p.category_id, p.owner_id 
+    FROM posts AS p LEFT JOIN votes AS v ON p.id = v.post_id WHERE p.id = ?
+    GROUP BY p.id, p.enrollment_date, p.title, p.content, p.status_id, p.category_id, p.owner_id;`
+    db.query(sql, [id], (err, result) => {
+        if (err)
+            return callback(err)
+        callback(null, result)
+    })
+}
 
 router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
@@ -107,6 +117,43 @@ router.post('/delete', verifyToken, (req, res) => {
 
             return res.json(result)
         })
+    })
+})
+
+router.post('/vote', verifyToken, (req, res) => {
+    const postId = req.query.id
+    const value = req.query.value
+    const user = req.user
+    
+    if(value !== '1' && value !== '0' && value !== '-1')
+        return res.status(400).json({ err: 'Wrong vote value.'})
+    
+    let sql = `SELECT * FROM posts WHERE id = ?`
+    db.query(sql, [postId], (err, result) => {
+        if(result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Post not found.'})
+        else{
+            sql = `SELECT * FROM votes WHERE user_id = ? AND post_id = ?`
+            db.query(sql, [user.userId, postId], (err, result) => {
+                if(result.length == 0){
+                    sql = `INSERT INTO votes (value, user_id, post_id ) VALUES (?, ?, ?)`
+                    db.query(sql, [value, user.userId, postId], (err, result) => {
+                        if(err)
+                            return res.json(err)
+                
+                        return res.json(result)
+                    })
+                }else{
+                    sql = `UPDATE votes SET value = ? WHERE user_id = ? AND post_id = ?`
+                    db.query(sql, [value, user.userId, postId], (err, result) => {
+                    if(err)
+                        return res.json(err)
+        
+                    return res.json(result)
+                    })
+                }  
+            })
+        }
     })
 })
 
