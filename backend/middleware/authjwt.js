@@ -28,7 +28,7 @@ function verifyToken(req, res, next) {
                 const newAccessToken = generateToken(payload.userId, payload.login, 1800)
     
                 res.cookie('refreshToken', refreshToken).header('Authorization', newAccessToken).send({ user: req.user })
-                return
+                
             }catch(err){
                 return res.status(401).json({ error: 'Invalid token.'})
             }
