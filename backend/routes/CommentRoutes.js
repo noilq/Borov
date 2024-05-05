@@ -14,7 +14,8 @@ const commentValidationChain = () => [
 router.get('/', verifyToken, (req, res) => {
     commId = req.query.id
 
-    const sql = 'SELECT * FROM comments WHERE id = ?'
+    const sql = `SELECT c.id, c.enrollment_date, c.content, c.status_id, c.comment_parent_id, c.post_parent_id, 
+    (SELECT IFNULL(SUM(v.value), 0) FROM votes AS v WHERE v.comment_id = c.id) as score FROM comments AS c WHERE id = ?`
     db.query(sql, [commId], (err, result) => {
         if (err) 
             return res.json(err)
@@ -157,5 +158,42 @@ async function CommentExisting(postId, commId) {
         })
     })
 }
+
+router.post('/vote', verifyToken, (req, res) => {
+    const postId = req.query.id
+    const value = req.query.value
+    const user = req.user
+    
+    if(value !== '1' && value !== '0' && value !== '-1')
+        return res.status(400).json({ err: 'Wrong vote value.'})
+    
+    let sql = `SELECT * FROM comments WHERE id = ?`
+    db.query(sql, [postId], (err, result) => {
+        if(result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Comment not found.'})
+        else{
+            sql = `SELECT * FROM votes WHERE user_id = ? AND comment_id = ?`
+            db.query(sql, [user.userId, postId], (err, result) => {
+                if(result.length == 0){
+                    sql = `INSERT INTO votes (value, user_id, comment_id ) VALUES (?, ?, ?)`
+                    db.query(sql, [value, user.userId, postId], (err, result) => {
+                        if(err)
+                            return res.json(err)
+                
+                        return res.json(result)
+                    })
+                }else{
+                    sql = `UPDATE votes SET value = ? WHERE user_id = ? AND comment_id = ?`
+                    db.query(sql, [value, user.userId, postId], (err, result) => {
+                    if(err)
+                        return res.json(err)
+        
+                    return res.json(result)
+                    })
+                }  
+            })
+        }
+    })
+})
 
 module.exports = router
