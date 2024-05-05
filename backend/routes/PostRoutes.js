@@ -12,9 +12,9 @@ const postValidationChain = () => [
         .isLength({ min: 0, max: 2500}).withMessage('Content must be less than 2500 characters long')
 ]
 
-router.get('/', (req, res) => {
+router.get('/unauthorized', (req, res) => {
     const postId = req.query.id
-    
+
     GetPost(postId, (err, result) => {
         if (err)
             return res.status(500).json({ error: 'Database error.' })
@@ -24,15 +24,45 @@ router.get('/', (req, res) => {
     })
 })
 
+router.get('/', verifyToken, (req, res) => {
+    const postId = req.query.id
+    const user = req.user
+
+    GetPost(postId, (err, result) => {
+        if (err)
+            return res.status(500).json({ error: 'Database error.' })
+        if (result.length == 0 || result[0].status_id == 3)
+            return res.status(404).json({ error: 'Post not found.' })
+        res.json(result)
+    })
+
+    CreateView(postId, user.userId, (err, result) => {
+        if (err)
+            return res.status(500).json({ error: 'Database error.' })
+    })
+})
+
 function GetPost(id, callback){
-    const sql = `SELECT p.id, p.enrollment_date, p.title, p.content, SUM(v.value) AS score, p.status_id, p.category_id, p.owner_id 
-    FROM posts AS p LEFT JOIN votes AS v ON p.id = v.post_id WHERE p.id = ?
+    const sql = `SELECT p.id, p.enrollment_date, p.title, p.content, 
+    (SELECT IFNULL(SUM(v.value), 0) FROM votes v WHERE v.post_id = p.id) AS score, p.status_id, p.category_id, p.owner_id,
+    COUNT(DISTINCT vw.user_id) AS unique_views,
+    COUNT(vw.id) AS total_views
+    FROM posts AS p LEFT JOIN votes AS v ON p.id = v.post_id LEFT JOIN views AS vw ON p.id = vw.post_id WHERE p.id = ? 
     GROUP BY p.id, p.enrollment_date, p.title, p.content, p.status_id, p.category_id, p.owner_id;`
     db.query(sql, [id], (err, result) => {
         if (err)
             return callback(err)
         callback(null, result)
     })
+}
+
+function CreateView(postId, userId, callback) {
+    const sql = `INSERT INTO views (post_id, user_id) VALUES (?, ?)`
+    db.query(sql, [postId, userId], (err, result) => {
+        if (err)
+            return callback(err)
+        callback(null, result)
+    });
 }
 
 router.post('/create', verifyToken, postValidationChain(), (req, res) => {
