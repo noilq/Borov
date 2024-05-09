@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <input type="text" id="name">
+    <input type="text" id="description">
+    <button id="updateButton">Update</button>
+    <script>
+        var token = document.cookie.substring(document.cookie.lastIndexOf("=") + 1);
+
+        $.ajax({
+            method: "POST",
+            url: `/user/?login=${window.localStorage.login}`,
+            headers: {"Authorization": "Bearer: " + token},
+            success: function (result) {
+                console.log(result);
+                $("#name").val(result.name);
+                $("#description").val(result.description == null ? "No bio" : result.description);
+            }
+        });
+
+        document.getElementById("updateButton").onclick = function () {
+            $.ajax({
+                method: "POST",
+                url: `/user/edit`,
+                data:{
+                    name: $("#name").val(),
+                    description: $("#description").val()
+                },
+                headers: {"Authorization": "Bearer: " + token},
+                success: function (result) {
+                    console.log(result);
+                    window.location.replace("/user/profile");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

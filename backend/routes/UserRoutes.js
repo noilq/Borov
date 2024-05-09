@@ -21,6 +21,13 @@ const createUserValidationChain = () => [
         .isLength({ max: 500}).withMessage('Description must be at most 500 characters long.')
 ]
 
+const editUserValidationChain = () => [
+    body('name')
+        .isLength({ min: 4, max: 50}).withMessage('Name must be between 4-50 characters.'),
+    body('description')
+        .isLength({ max: 500}).withMessage('Description must be at most 500 characters long.')
+]
+
 const loginUserValidationChain = () => [
     body('login')
         .isLength({ min: 4, max: 32}).withMessage('Invalid login.')
@@ -29,13 +36,46 @@ const loginUserValidationChain = () => [
         .isLength({ min: 8}).withMessage('Invalid password.')
         .custom(value => !/\s/.test(value)).withMessage('Invalid password.')
 ]
-
+/*
 router.get('/', (req, res) => {
     const sql = 'SELECT * FROM users'
     db.query(sql, (err, data) => {
         if (err) 
             return res.json(err)
         res.json(data)
+    })
+})*/
+
+router.post('/', verifyToken, (req, res) => {
+    userLogin = req.query.login
+
+    const sql = `SELECT u.login, u.enrollment_date, u.name, u.description, u.reputation FROM users as u WHERE u.login = ?;`
+    db.query(sql, [userLogin], (err, result) => {
+        if (err) 
+            return res.json(err)
+        if (result.length == 0)
+            return res.status(404).json({ error: 'User not found.' })
+        res.json(result[0])
+    })
+})
+
+router.post("/edit", verifyToken, editUserValidationChain(), (req, res) => {
+    const validationErrors = validationResult(req)
+
+    if(!validationErrors.isEmpty())
+        return res.status(400).json( { errors: validationErrors.array() })
+
+    const user = req.user
+    const name = req.body.name;
+    const description = req.body.description;
+
+    var sql = "UPDATE users SET name=?,description=? WHERE users.login = ?";
+    db.query(sql, [name, description, user.login], function (err, result) {
+        if(err) console.log("error: " + err);
+        else{
+            console.log(result);
+            return res.status(200).json({result: result});
+        }
     })
 })
 
@@ -62,7 +102,27 @@ router.post('/create', createUserValidationChain(), (req, res) => {
 })
 
 router.get('/registration', (req, res) => {
-    require("fs").readFile(path.join(__dirname, "../../frontend/views/registration.html"), function (err, data) {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/registration.html"), function (err, data) {
+            if(err) console.error(err);
+        else{
+            res.end(data)
+        
+        }
+    })
+})
+
+router.get('/settings', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/settings.html"), function (err, data) {
+            if(err) console.error(err);
+        else{
+            res.end(data)
+        
+        }
+    })
+})
+
+router.get('/feed', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/feed.html"), function (err, data) {
             if(err) console.error(err);
         else{
             res.end(data)
@@ -108,6 +168,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
         if(rememberMe) {
             accesToken = generateToken( userId, req.body.login, 1800 )
             refreshToken = generateToken( userId, req.body.login, 604800 )
+            console.log(accesToken);
             return res.cookie('refreshToken', refreshToken).header('Authorization', accesToken).json( {success: 'Login successful.'} )
         }
 
@@ -116,7 +177,16 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
 })
 
 router.get('/login', (req, res) => {
-    require("fs").readFile(path.join(__dirname, "../../frontend/views/login.html"), function (err, data) {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/login.html"), function (err, data) {
+            if(err) console.error(err)
+        else{
+            res.end(data)
+        }
+    })
+})
+
+router.get('/profile', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/profile.html"), function (err, data) {
             if(err) console.error(err)
         else{
             res.end(data)

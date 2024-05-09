@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1 id="name">name</h1>
+    <p id="description"></p>
+    <a href="/user/settings">
+        <button id="buttonEdit">Edit</button>
+    </a>
+    <h2>Posts</h2>
+    <div id="posts"></div>
+    <script>
+        console.log(document.cookie);
+        var token = document.cookie.substring(document.cookie.lastIndexOf("=") + 1);
+        console.log(token);
+
+        $.ajax({
+            method: "POST",
+            url: `/user/?login=${window.localStorage.login}`,
+            headers: {"Authorization": "Bearer: " + token},
+            success: function (result) {
+                console.log(result);
+                $("#name").text(result.name);
+                $("#description").text(result.description == null ? "No bio" : result.description);
+            }
+        });
+
+        // POSTS
+
+        $.ajax({
+            method: "GET",
+            url: `/post/allPosts`,
+            headers: {"Authorization": "Bearer: " + token},
+            success: function (result) {
+                console.log("Result: ");
+                console.log(result);
+                $("#posts").text("");
+                result.forEach(post => {
+                    $("<h3>").text(post.title).appendTo("#posts");
+                    $("<p>").text(post.content).appendTo("#posts");
+                });
+            }
+        });
+    </script>
+</body>
+</html>

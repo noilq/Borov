@@ -42,6 +42,26 @@ router.get('/', verifyToken, (req, res) => {
     })
 })
 
+router.get('/allPosts', verifyToken, (req, res) => {
+    const user = req.user
+
+    let sql = `SELECT p.id, p.enrollment_date, p.title, p.content, 
+    (SELECT IFNULL(SUM(v.value), 0) FROM votes v WHERE v.post_id = p.id) AS score, p.status_id, p.category_id, p.owner_id,
+    COUNT(DISTINCT vw.user_id) AS unique_views,
+    COUNT(vw.id) AS total_views
+    FROM posts AS p LEFT JOIN votes AS v ON p.id = v.post_id LEFT JOIN views AS vw ON p.id = vw.post_id WHERE p.owner_id = ?
+    GROUP BY p.id, p.enrollment_date, p.title, p.content, p.status_id, p.category_id, p.owner_id;`
+    db.query(sql, [user.userId], function (err, result) {
+        if(err) {
+            console.log("Error: " + err);
+            return res.status(400).json({error: err})
+        }
+        else{
+            console.log(result);
+            return res.status(200).json(result)
+        }
+    })
+})
 function GetPost(id, callback){
     const sql = `SELECT p.id, p.enrollment_date, p.title, p.content, 
     (SELECT IFNULL(SUM(v.value), 0) FROM votes v WHERE v.post_id = p.id) AS score, p.status_id, p.category_id, p.owner_id,

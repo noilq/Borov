@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <div id="NewPost">
+        <h3>New post</h3>
+        <p>Title:</p>
+        <input type="text" id="title">
+        <p>Content:</p>
+        <textarea name="content" id="content" placeholder="Tell us something..."></textarea>
+        <button id="postButton">Post</button>
+    </div>
+    <div id="otherPosts"></div>
+    <script>
+        var token = document.cookie.substring(document.cookie.lastIndexOf("=") + 1);
+        
+        $("#postButton").on("click", function () {
+            $.ajax({
+                method: "POST",
+                url: `/post/create`,
+                data:{
+                    title: $("#title").val(),
+                    content: $("#content").val()
+                },
+                headers: {"Authorization": "Bearer: " + token},
+                success: function (result) {
+                    console.log(result);
+                    window.location.replace("/user/feed");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
