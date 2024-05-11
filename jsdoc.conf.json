@@ -7,7 +7,8 @@
       "backend/middleware/authjwt.js", 
       "backend/routes/UserRoutes.js",
       "backend/routes/PostRoutes.js",
-      "backend/routes/CommentRoutes.js"
+      "backend/routes/CommentRoutes.js",
+      "backend/routes/FeedRoutes.js"
     ]
   },
   "opts": {

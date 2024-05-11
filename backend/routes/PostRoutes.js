@@ -190,7 +190,7 @@ router.post('/vote', verifyToken, (req, res) => {
                     db.query(sql, [value, user.userId, postId], (err, result) => {
                         if(err)
                             return res.json(err)
-                
+                        
                         return res.json(result)
                     })
                 }else{
@@ -198,7 +198,7 @@ router.post('/vote', verifyToken, (req, res) => {
                     db.query(sql, [value, user.userId, postId], (err, result) => {
                     if(err)
                         return res.json(err)
-        
+                    
                     return res.json(result)
                     })
                 }  
