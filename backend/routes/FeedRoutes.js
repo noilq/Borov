@@ -10,9 +10,28 @@ const { verifyToken } = require('../middleware/authjwt')
 /**
  * @swagger
  * /feed/feedPostsDate:
- *   get:
+ *   post:
  *     summary: Returns posts for feed.
  *     description: Returns feed posts from x to y, sorted by newest/oldest.
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Starter pos.
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: End pos.
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
  *         description: Success.
@@ -28,7 +47,7 @@ const { verifyToken } = require('../middleware/authjwt')
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
-router.get('/feedPostsDate', verifyToken, (req, res) => {
+router.post('/feedPostsDate', verifyToken, (req, res) => {
     let { userId, from, to, order } = req.query
     
     if(order !== 'ASC')
@@ -59,9 +78,28 @@ router.get('/feedPostsDate', verifyToken, (req, res) => {
 /**
  * @swagger
  * /feed/feedPostsScore:
- *   get:
+ *   post:
  *     summary: Returns posts for feed.
  *     description: Returns feed posts from x to y, sorted by score.
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Starter pos.
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: End pos.
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
  *         description: Success.
@@ -77,7 +115,7 @@ router.get('/feedPostsDate', verifyToken, (req, res) => {
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
-router.get('/feedPostsScore', verifyToken, (req, res) => {
+router.post('/feedPostsScore', verifyToken, (req, res) => {
     let { from, to, order } = req.query
     
     if(order !== 'ASC')
@@ -116,9 +154,34 @@ router.get('/feedPostsScore', verifyToken, (req, res) => {
 /**
  * @swagger
  * /feed/userPostsDate:
- *   get:
+ *   post:
  *     summary: Returns user posts.
  *     description: Returns user posts from x to y, sorted by newest/oldest.
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User id.
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Starter pos.
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: End pos.
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
  *         description: Success.
@@ -135,7 +198,7 @@ router.get('/feedPostsScore', verifyToken, (req, res) => {
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
-router.get('/userPostsDate', verifyToken, (req, res) => {
+router.post('/userPostsDate', verifyToken, (req, res) => {
     let { userId, from, to, order } = req.query
     
     if(order !== 'ASC')
@@ -166,9 +229,34 @@ router.get('/userPostsDate', verifyToken, (req, res) => {
 /**
  * @swagger
  * /feed/userPostsScore:
- *   get:
+ *   post:
  *     summary: Returns user posts.
  *     description: Returns user posts from x to y, sorted by score.
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Owner id.
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Starter pos.
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: End pos.
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
  *         description: Success.
@@ -178,14 +266,14 @@ router.get('/userPostsDate', verifyToken, (req, res) => {
 
 /**
  * Returns user posts from x to y, sorted by score.
- * @param {int} userId.query.required - Owner id.
- * @param {int} from.query.required - Starter pos.
- * @param {int} to.query.required - End pos.
+ * @param {number} userId.query.required - Owner id.
+ * @param {number} from.query.required - Starter pos.
+ * @param {number} to.query.required - End pos.
  * @param {string} order.query - Optional param ('ASC' stands for less score, 'DESC' stands for more score), 'DESC' by default.
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
-router.get('/userPostsScore', verifyToken, (req, res) => {
+router.post('/userPostsScore', verifyToken, (req, res) => {
     let { userId, from, to, order } = req.query
     
     if(order !== 'ASC')
@@ -213,6 +301,34 @@ router.get('/userPostsScore', verifyToken, (req, res) => {
     })
 })
 
+
+/**
+ * @swagger
+ * CreateView:
+ *   get:
+ *     summary: Create view for post.
+ *     description: Create view for specific post.
+ *     parameters:
+ *       - in: query
+ *         name: postId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Post id.
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User id.
+ */
+
+/**
+ * Create view for specific post.
+ * @param {number} postId - Post id.
+ * @param {number} userId - User id.
+ * @param {function} callback - Callback function.
+ */
 function CreateView(postId, userId, callback) {
     const sql = `INSERT INTO views (post_id, user_id) VALUES (?, ?)`
     db.query(sql, [postId, userId], (err, result) => {

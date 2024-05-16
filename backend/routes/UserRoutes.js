@@ -46,6 +46,32 @@ router.get('/', (req, res) => {
     })
 })*/
 
+/** 
+ * @swagger
+ * /post/:
+ *   post:
+ *     summary: Returns user data.
+ *     description: Returns user data by userd login.
+ *     parameters:
+ *       - in: query
+ *         name: login
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User login.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       500:
+ *         description: Server error.
+ */
+
+/**
+ * Returns user data by userd login.
+ * @param {string} login.query.required - User login.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 404 - User not found.
+ */
 router.post('/', verifyToken, (req, res) => {
     userLogin = req.query.login
 
@@ -59,6 +85,47 @@ router.post('/', verifyToken, (req, res) => {
     })
 })
 
+
+/** 
+ * @swagger
+ * /post/edit:
+ *   post:
+ *     summary: Edits user data.
+ *     description: Edits user by login.
+ *     parameters:
+ *       - in: query
+ *         name: login
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User login.
+ *       - in: body
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: New user name.
+ *       - in: body
+ *         name: description
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: New user description.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Failed validation.
+ */
+
+/**
+ * Edits user by login.
+ * @param {string} req.user.required - User login.
+ * @param {string} req.body.name.required - New user name.
+ * @param {string} req.body.description.required - New user description.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Failed validation.
+ */
 router.post("/edit", verifyToken, editUserValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -79,6 +146,53 @@ router.post("/edit", verifyToken, editUserValidationChain(), (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/create:
+ *   post:
+ *     summary: Createы user.
+ *     description: Createы user.
+ *     parameters:
+ *       - in: body
+ *         name: login
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User login.
+ *       - in: body
+ *         name: password_hash
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User password_hash.
+ *       - in: body
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User name.
+ *       - in: body
+ *         name: description
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User description.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Failed validation.
+ */
+
+/**
+ * Createы user.
+ * @param {string} req.body.login.required - User login.
+ * @param {string} req.body.password_hash.required - User password.
+ * @param {string} req.body.name.required - User name.
+ * @param {string} req.body.description.required - User description.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Failed validation.
+ */
 router.post('/create', createUserValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -101,6 +215,7 @@ router.post('/create', createUserValidationChain(), (req, res) => {
     })
 })
 
+
 router.get('/registration', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/registration.html"), function (err, data) {
             if(err) console.error(err);
@@ -110,6 +225,7 @@ router.get('/registration', (req, res) => {
         }
     })
 })
+
 
 router.get('/settings', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/settings.html"), function (err, data) {
@@ -121,6 +237,7 @@ router.get('/settings', (req, res) => {
     })
 })
 
+
 router.get('/feed', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/feed.html"), function (err, data) {
             if(err) console.error(err);
@@ -130,6 +247,7 @@ router.get('/feed', (req, res) => {
         }
     })
 })
+
 
 router.post('/login', loginUserValidationChain(),(req, res) => {
     const validationErrors = validationResult(req)
@@ -176,6 +294,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
     })
 })
 
+
 router.get('/login', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/login.html"), function (err, data) {
             if(err) console.error(err)
@@ -185,6 +304,7 @@ router.get('/login', (req, res) => {
     })
 })
 
+
 router.get('/profile', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/profile.html"), function (err, data) {
             if(err) console.error(err)
@@ -193,6 +313,7 @@ router.get('/profile', (req, res) => {
         }
     })
 })
+
 
 router.get('/protected', verifyToken, (req, res) => {
     const login = req.user
