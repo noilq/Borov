@@ -215,7 +215,17 @@ router.post('/create', createUserValidationChain(), (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/registration:
+ *   get:
+ *     summary: Returns registration form.
+ *     description: Returns registration form.
+ */
 
+/**
+ * Returns registration form.
+ */
 router.get('/registration', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/registration.html"), function (err, data) {
             if(err) console.error(err);
@@ -226,7 +236,17 @@ router.get('/registration', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/settings:
+ *   get:
+ *     summary: Returns settings form.
+ *     description: Returns settings form.
+ */
 
+/**
+ * Returns settings form.
+ */
 router.get('/settings', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/settings.html"), function (err, data) {
             if(err) console.error(err);
@@ -237,7 +257,17 @@ router.get('/settings', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/feed:
+ *   get:
+ *     summary: Returns feed form.
+ *     description: Returns feed form.
+ */
 
+/**
+ * Returns feed form.
+ */
 router.get('/feed', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/feed.html"), function (err, data) {
             if(err) console.error(err);
@@ -248,7 +278,42 @@ router.get('/feed', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/login:
+ *   post:
+ *     summary: Login user.
+ *     description: Returns auth tokens.
+ *     parameters:
+ *       - in: body
+ *         name: login
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User login.
+ *       - in: body
+ *         name: password_hash
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User password_hash.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Wrong input. 
+ *       500:
+ *         description: Server error. 
+ */
 
+/**
+ * Login, returns auth tokens..
+ * @param {string} req.body.login.required - User login.
+ * @param {string} req.body.password_hash.required - User password.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Wrong input.
+ * @returns {Error} 500 - Server error.
+ */
 router.post('/login', loginUserValidationChain(),(req, res) => {
     const validationErrors = validationResult(req)
 
@@ -294,7 +359,17 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/login:
+ *   get:
+ *     summary: Returns login form.
+ *     description: Returns login form.
+ */
 
+/**
+ * Returns login form.
+ */
 router.get('/login', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/login.html"), function (err, data) {
             if(err) console.error(err)
@@ -304,7 +379,17 @@ router.get('/login', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/profile:
+ *   get:
+ *     summary: Returns profile form.
+ *     description: Returns profile form.
+ */
 
+/**
+ * Returns profile form.
+ */
 router.get('/profile', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/profile.html"), function (err, data) {
             if(err) console.error(err)
@@ -314,7 +399,17 @@ router.get('/profile', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /post/protected:
+ *   get:
+ *     summary: Auth test endpoint.
+ *     description: Auth test endpoint.
+ */
 
+/**
+ * Returns Auth test endpoint.
+ */
 router.get('/protected', verifyToken, (req, res) => {
     const login = req.user
     
