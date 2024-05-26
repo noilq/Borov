@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { body, validationResult } = require('express-validator')
 const path = require('path')
 const { verifyToken, generateToken }= require('../middleware/authjwt.js');
-const { log } = require('console');
+const { log, error } = require('console');
 
 const createUserValidationChain = () => [
     body('login')
@@ -199,17 +199,17 @@ router.post('/create', createUserValidationChain(), (req, res) => {
     if (!validationErrors.isEmpty()) {
         return res.status(400).json({ errors: validationErrors.array() })
     }
-
+    
     const userData = req.body
 
     userData.password_hash = crypto.createHash('md5').update(userData.password_hash).digest('hex')
     const sql = `INSERT INTO users (login, password_hash, name, description) VALUES (?, ?, ?, ?)`
-
+    
     db.query(sql, [userData.login, userData.password_hash, userData.name, userData.description], (err, result) => {
         if(err) {
             if(err.errno == 1062)
-                return res.json({ error: 'Login is already taken by someone.' })
-            return res.json(err)
+                return res.status(400).json({ error: 'Login is already taken by someone.' })
+            return res.status(400).json(err)
         }
         return res.json(result)
     })
@@ -235,6 +235,8 @@ router.get('/registration', (req, res) => {
         }
     })
 })
+
+
 
 /** 
  * @swagger
@@ -318,7 +320,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
     const validationErrors = validationResult(req)
 
     if (!validationErrors.isEmpty()) {
-        return res.status(400).json({ errors: validationErrors.array() })
+        return res.status(400).json({ errors: validationErrors.array(), error: 'Validation error' })
     }
 
     const login = req.body.login
@@ -340,7 +342,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
         password_hash = crypto.createHash('md5').update(password_hash).digest('hex') 
 
         if (dbpassword_hash !== password_hash) {
-            return res.status(400).json({ error: 'Wrong password. Please try again.' })
+            return res.status(403).json({ error: 'Wrong password. Please try again.' })
         }
 
         const userId = result[0].id
@@ -351,7 +353,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
         if(rememberMe) {
             accesToken = generateToken( userId, req.body.login, 1800 )
             refreshToken = generateToken( userId, req.body.login, 604800 )
-            console.log(accesToken);
+            //console.log(accesToken);
             return res.cookie('refreshToken', refreshToken).header('Authorization', accesToken).json( {success: 'Login successful.'} )
         }
 

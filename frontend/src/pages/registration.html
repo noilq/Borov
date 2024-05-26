@@ -3,18 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Borov</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/jquery-3.7.1.min.js"></script>
 </head>
 <body>
-    <form action="/user/create" id="reg_form" method="post">
-        <label for="login">Login:</label>
-        <input type="text" id="login" name="login"><br>
-        <label for="password">Password:</label>
-        <input type="text" id="password_hash" name="password_hash"><br>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name"><br>   
-        <input type="submit">
-    </form>
+    <div class="header">
+        <h1>BOROV</h1>
+    </div>
+    <div id="loginRegisterForm" class="container">
+        <form id="registrationForm" class="registration-form">
+            <h2>Sign up</h2>
+            <div class="input-group">
+                <label for="registration-username">Username</label>
+                <input type="text" id="registration-username" required>
+            </div>
+            <div class="input-group">
+                <label for="retistration-login">Login</label>
+                <input type="text" id="retistration-login" required>
+            </div>
+            <div class="input-group">
+                <label for="retistration-password">Password</label>
+                <input type="password" id="retistration-password" required>
+            </div>
+            <div class="input-group">
+                <label for="retistration-confirm-password">Confirm password</label>
+                <input type="password" id="retistration-confirm-password" required>
+            </div>
+            <div id="password-mismatch" class="password-error">Passwords don't match!</div>
+            <div class="input-group">
+                <input type="submit" value="Registration">
+            </div>
+            <div class="switch-form">
+                <p>Already have one? <a href="/user/login">Sign in</a></p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#registrationForm').on('submit', function(event) {
+                event.preventDefault();
+
+                var username = $('#registration-username').val();
+                var login = $('#retistration-login').val();
+                var password = $('#retistration-password').val();
+                var confirmPassword = $('#retistration-confirm-password').val();
+                var description = '';
+
+                if (password !== confirmPassword) {
+                    $('#password-mismatch').show();
+                } else {
+                    $('#password-mismatch').hide();
+                    $.ajax({
+                        url: '/user/create', 
+                        type: 'POST',
+                        data: {
+                            login: login,
+                            password_hash: password,
+                            name: username,
+                            description: description
+                        },
+                        success: function(response) {
+                            console.log('Success');
+                            window.location.href = '/user/profile.html';
+                        },
+                        error: function(error) {
+                            console.log(error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
-</html>
