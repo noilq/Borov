@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const db = require('../database')
 const { verifyToken } = require('../middleware/authjwt')
+const path = require('path')
 
 //
 //FEED
@@ -337,5 +338,26 @@ function CreateView(postId, userId, callback) {
         callback(null, result)
     })
 }
+
+/** 
+ * @swagger
+ * /feed/:
+ *   get:
+ *     summary: Returns feed page.
+ *     description: Returns feed page.
+ */
+
+/**
+ * Returns feed page я усейн болт.
+ */
+router.get('/', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/feed.html"), function (err, data) {
+            if(err) console.error(err)
+        else{
+            res.end(data)
+        
+        }
+    })
+})
 
 module.exports = router

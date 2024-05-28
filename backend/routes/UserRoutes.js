@@ -363,7 +363,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
 
 /** 
  * @swagger
- * /post/login:
+ * /get/login:
  *   get:
  *     summary: Returns login form.
  *     description: Returns login form.
@@ -383,7 +383,7 @@ router.get('/login', (req, res) => {
 
 /** 
  * @swagger
- * /post/profile:
+ * /get/profile:
  *   get:
  *     summary: Returns profile form.
  *     description: Returns profile form.
@@ -403,7 +403,7 @@ router.get('/profile', (req, res) => {
 
 /** 
  * @swagger
- * /post/protected:
+ * /get/protected:
  *   get:
  *     summary: Auth test endpoint.
  *     description: Auth test endpoint.

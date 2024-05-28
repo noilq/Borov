@@ -207,4 +207,28 @@ router.post('/vote', verifyToken, (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /get/getCategories:
+ *   get:
+ *     summary: Returns all categories from db.
+ *     description: Returns all categories from db.
+ */
+
+/**
+ * Returns all categories from db.
+ */
+router.get('/getCategories', (req, res) => {
+    const sql = 'SELECT * FROM categories';
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Ошибка при выполнении запроса:', err);
+            return res.status(500).json({ message: 'Ошибка при получении категорий', error: err });
+        }
+
+        return res.status(200).json(result);
+    });
+})
+
 module.exports = router
