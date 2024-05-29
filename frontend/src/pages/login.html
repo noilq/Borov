@@ -54,7 +54,20 @@
                         console.log('Success.');
                         $('#password-wrong').hide();
                         $('#login-wrong').hide();
-                        window.location.href = '/user/profile.html';
+
+                        function getCookie(name) {
+                            let matches = document.cookie.match(new RegExp(
+                                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+                            ));
+                            return matches ? decodeURIComponent(matches[1]) : undefined;
+                        }
+
+                        var refreshToken = getCookie('refreshToken');
+                        if (refreshToken) {
+                            localStorage.setItem('refreshToken', refreshToken);
+                        }
+                        localStorage.setItem('user', response.user);
+                        window.location.href = '/feed/';
                     },
                     error: function(error) {
                         if(error.responseJSON.error  == 'Wrong password. Please try again.'){

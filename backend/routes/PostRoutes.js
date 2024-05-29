@@ -171,37 +171,55 @@ router.post('/delete', verifyToken, (req, res) => {
 })
 
 router.post('/vote', verifyToken, (req, res) => {
-    const postId = req.query.id
-    const value = req.query.value
+    const postId = req.body.id
+    const value = req.body.value
     const user = req.user
-    
-    if(value !== '1' && value !== '0' && value !== '-1')
+
+    if (value !== '1' && value !== '0' && value !== '-1')
         return res.status(400).json({ err: 'Wrong vote value.'})
-    
+
     let sql = `SELECT * FROM posts WHERE id = ?`
-    db.query(sql, [postId], (err, result) => {
-        if(result.length == 0 || result[0].status_id == 3)
+    db.query(sql, [postId], (err, postResult) => {
+        if (postResult.length === 0 || postResult[0].status_id === 3)
             return res.status(404).json({ error: 'Post not found.'})
-        else{
+        else {
             sql = `SELECT * FROM votes WHERE user_id = ? AND post_id = ?`
-            db.query(sql, [user.userId, postId], (err, result) => {
-                if(result.length == 0){
+            db.query(sql, [user.userId, postId], (err, voteResult) => {
+                if (voteResult.length === 0) {
                     sql = `INSERT INTO votes (value, user_id, post_id ) VALUES (?, ?, ?)`
-                    db.query(sql, [value, user.userId, postId], (err, result) => {
-                        if(err)
+                    db.query(sql, [value, user.userId, postId], (err, insertResult) => {
+                        if (err)
                             return res.json(err)
-                        
-                        return res.json(result)
-                    })
-                }else{
+
+                        const updatedScore = parseInt(postResult[0].score) + parseInt(value)
+                        sql = `UPDATE posts SET score = ? WHERE id = ?`
+                        db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
+                            if (err)
+                                return res.json(err)
+
+                            return res.json(insertResult)
+                        });
+                    });
+                } else {
+                    const oldValue = voteResult[0].value
+                    const newValue = parseInt(value)
+                    const updatedValue = newValue - oldValue
+
                     sql = `UPDATE votes SET value = ? WHERE user_id = ? AND post_id = ?`
-                    db.query(sql, [value, user.userId, postId], (err, result) => {
-                    if(err)
-                        return res.json(err)
-                    
-                    return res.json(result)
+                    db.query(sql, [newValue, user.userId, postId], (err, updateResult) => {
+                        if (err)
+                            return res.json(err)
+
+                        const updatedScore = parseInt(postResult[0].score) + updatedValue
+                        sql = `UPDATE posts SET score = ? WHERE id = ?`
+                        db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
+                            if (err)
+                                return res.json(err)
+
+                            return res.json(updateResult)
+                        })
                     })
-                }  
+                }
             })
         }
     })

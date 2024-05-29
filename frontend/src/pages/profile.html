@@ -3,49 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <title>Profile Edit</title>
+    <link rel="stylesheet" href="/css/profilestyle.css">
+    <script src="/jquery-3.7.1.min.js"></script>
+    <style>
+        .edit-profile-form {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1 id="name">name</h1>
-    <p id="description"></p>
-    <a href="/user/settings">
-        <button id="buttonEdit">Edit</button>
-    </a>
-    <h2>Posts</h2>
-    <div id="posts"></div>
-    <script>
-        console.log(document.cookie);
-        var token = document.cookie.substring(document.cookie.lastIndexOf("=") + 1);
-        console.log(token);
+    <div class="container">
+        <h2>Profile</h2>
+        <div id="profilePage" class="profile-page">
+            <p>Name: <span id="profileName">Name</span></p>
+            <p>Login: <span id="profileLogin">Login</span></p>
+            <p>Description: <span id="profileDescription">Description</span></p>
+            <p>Karma: <span id="profileKarma">0</span></p>
+            <button id="editProfileButton" class="editProfileButton">Edit</button>
+            <div id="editProfileForm" class="edit-profile-form">
+                <div class="input-group">
+                    <label for="editName">New name</label>
+                    <input type="text" id="editName">
+                </div>
+                <div class="input-group">
+                    <label for="editDescription">New description</label>
+                    <textarea id="editDescription"></textarea>
+                </div>
+                <div class="input-group">
+                    <input id="saveChangesButton" type="submit" value="Save changes">
+                    <input id="returnToMain" type="submit" value="Return to main page" style="margin-top: 10px;">
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+$(document).ready(function() {
+    $('#editProfileButton').click(function() {
+        $('#editProfileForm').toggle();
+    });
+
+    $('#returnToMain').click(function(event) {
+        window.location.href = '/feed/';
+    });
+
+    $('#saveChangesButton').click(function(event) {
+        event.preventDefault();
+
+        var newName = $('#editName').val();
+        var newDescription = $('#editDescription').val();
+
+        const refreshToken = localStorage.getItem('refreshToken');
 
         $.ajax({
-            method: "POST",
-            url: `/user/?login=${window.localStorage.login}`,
-            headers: {"Authorization": "Bearer: " + token},
-            success: function (result) {
-                console.log(result);
-                $("#name").text(result.name);
-                $("#description").text(result.description == null ? "No bio" : result.description);
+            type: "POST",
+            url: "/user/edit",
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                name: newName,
+                description: newDescription
+            },
+            success: function(response) {
+                window.location.href = '/user/profile';
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
             }
         });
+    });
 
-        // POSTS
-
+    function loadUserProfile() {
+        const login = localStorage.getItem('user')
+        const refreshToken = localStorage.getItem('refreshToken');
+        
         $.ajax({
-            method: "GET",
-            url: `/post/allPosts`,
-            headers: {"Authorization": "Bearer: " + token},
-            success: function (result) {
-                console.log("Result: ");
-                console.log(result);
-                $("#posts").text("");
-                result.forEach(post => {
-                    $("<h3>").text(post.title).appendTo("#posts");
-                    $("<p>").text(post.content).appendTo("#posts");
-                });
+            type: "POST",
+            url: "/user/",
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                login: login
+            },
+            success: function(response) {
+                $('#profileName').text(response.name);
+                $('#profileLogin').text(response.login);
+                $('#profileDescription').text(response.description);
+                $('#profileKarma').text(response.reputation);
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
             }
         });
-    </script>
+    }
+
+    loadUserProfile();
+});
+</script>
 </body>
 </html>

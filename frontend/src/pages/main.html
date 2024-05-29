@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum Borov</title>
+    <link rel="stylesheet" href="/css/profilestyle.css">
+    <script src="/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1 id="headerTitle" class="headerTitle">BOROV</h1>
+        <img id="headerProfileIcon" src="public/profile-icon.png" alt="Profile Icon" class="profile-icon">
+    </div>
+    <div id="forumPage">
+        <div id="topicsSidebar" class="sidebar"></div>
+        <div class="main-content" id="main-content">
+            <div id="categoryContainer" class="forum-section">
+                <div class="unterHeader">
+                    <h2 id="categoryName">Main</h2>
+                    <button class="create-thread-btn">Create thread</button>
+                </div>
+                <div class="create-thread-form" id="create-thread-form">
+                    <h3>Create new thread</h3>
+                    <div class="input-group">
+                        <label for="thread-title">Title</label>
+                        <input type="text" id="thread-title" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="thread-content">Content</label>
+                        <textarea id="thread-content" required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="thread-images">Фотографии (максимум 3)</label>
+                        <input type="file" id="thread-images" accept="image/*" multiple>
+                    </div>
+                    <div class="input-group">
+                        <input type="submit" value="Create thread">
+                    </div>
+                </div>
+                <div class="threads" id="threads-games"></div>
+            </div>
+            <div class="dropdown">
+                <button class="toggle-btn" id="toggleButton">Newest</button>
+                <div class="dropdown-content">
+                    <a href="#" id="newestOption">Newest</a>
+                    <a href="#" id="bestOption">Best</a>
+                </div>
+            </div>
+            <div class="thread" id="threadContent">
+                <div class="thread-info">
+                    <div class="thread-metadata">
+                        <span class="thread-score">Score треда: <span class="score-value">0</span></span>
+                        <span class="thread-author">Автор треда</span>
+                        <span class="thread-date">Дата создания: <span class="date-value">2024-01-01</span></span>
+                    </div>
+                </div>
+                <h2 class="thread-title">Заголовок</h2>
+                <p class="thread-content">Содержание поста</p>
+                <div class="messages" id="messages">
+                    <div class="message-form">
+                        <textarea id="new-message" class="message-input" placeholder="Написать сообщение"></textarea>
+                        <button class="send-button">Send</button>
+                    </div>
+                    <div class="message">
+                        <div class="message-header">
+                            <div class="vote-buttons">
+                                <button class="upvote-button">+</button>
+                                <span class="score">5</span>
+                                <button class="downvote-button">-</button>
+                            </div>
+                            <span class="message-author">Пидор Рваныч</span>
+                            <span class="message-author-login">@pidormot</span>
+                        </div>
+                        <p>Пися попа кака какашки</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    function handleNewestOption() {
+        console.log('Newest option selected');
+    }
+
+    function handleBestOption() {
+        console.log('Best option selected');
+    }
+
+    $('#newestOption').click(function(event) {
+        event.preventDefault();
+        handleNewestOption();
+        $('#toggleButton').text('Newest');
+    });
+
+    $('#bestOption').click(function(event) {
+        event.preventDefault(); 
+        handleBestOption();
+        $('#toggleButton').text('Best');
+    });
+
+    $('#toggleButton').click(function() {
+        $('#dropdownContent').toggle();
+    });
+
+    $(document).click(function(event) {
+        if (!$(event.target).closest('#toggleButton').length && !$(event.target).closest('#dropdownContent').length) {
+            $('#dropdownContent').hide();
+        }
+    });
+    
+    $(document).ready(function() {
+        var currCategory = "Main";
+
+        function updateCategory(categoryName) {
+        currCategory = categoryName;
+        $("#categoryName").text(currCategory);
+        }
+
+        $.ajax({
+            url: '/post/getCategories',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                const categoriesList = $('#categories-list');
+                categoriesList.empty();
+                    
+                $("#categoryName").text(currCategory);
+
+                data.forEach(function(category) {
+                    var newLink = $('<a></a>')
+                        .attr('id', 'topicId' + category.id)
+                        .attr('href', '#')
+                        .text(category.name)
+                        .click(function() {
+                        updateCategory(category.name);
+                        });
+                    $('#topicsSidebar').append(newLink);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to get categories:', error);
+            }
+        });
+    });
+</script>
+</html>

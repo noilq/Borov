@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,10 @@
 <body>
     <div class="header">
         <h1 id="headerTitle" class="headerTitle">BOROV</h1>
-        <img id="headerProfileIcon" src="public/profile-icon.png" alt="Profile Icon" class="profile-icon">
+        <a href="/user/profile">
+            <img id="headerProfileIcon" src="public/profile-icon.png" alt="Profile Icon" class="profile-icon">
+        </a>
+        
     </div>
     <div id="forumPage">
         <div id="topicsSidebar" class="sidebar"></div>
@@ -38,7 +41,6 @@
                         <input type="submit" value="Create thread">
                     </div>
                 </div>
-                <div class="threads" id="threads-games"></div>
             </div>
             <div class="dropdown">
                 <button class="toggle-btn" id="toggleButton">Newest</button>
@@ -47,16 +49,17 @@
                     <a href="#" id="bestOption">Best</a>
                 </div>
             </div>
+            <div class="threads" id="threads"></div>
             <div class="thread" id="threadContent">
                 <div class="thread-info">
                     <div class="thread-metadata">
-                        <span class="thread-score">Score треда: <span class="score-value">0</span></span>
-                        <span class="thread-author">Автор треда</span>
-                        <span class="thread-date">Дата создания: <span class="date-value">2024-01-01</span></span>
+                        <span class="thread-score">Post score: <span class="score-value">0</span></span>
+                        <span class="thread-author">Post author</span>
+                        <span class="thread-date">Enrollment Date: <span class="date-value">2024-01-01</span></span>
                     </div>
                 </div>
-                <h2 class="thread-title">Заголовок</h2>
-                <p class="thread-content">Содержание поста</p>
+                <h2 class="thread-title">Title</h2><br><br><br>
+                <p class="thread-content">Content</p>
                 <div class="messages" id="messages">
                     <div class="message">
                         <div class="message-header">
@@ -80,24 +83,38 @@
     </div>
 </body>
 <script>
+    let currCategory = "General";
+    let currCategoryId = "1";
+    let currOrder = "DESC";
+
     function handleNewestOption() {
-        console.log('Newest option selected');
+        currOrder = "DESC";
+        updateThreads(0, 10);
+        $('#toggleButton').text('Newest');
     }
 
     function handleBestOption() {
-        console.log('Best option selected');
+        currOrder = "ASC";
+        updateThreads(0, 10);
+        $('#toggleButton').text('Best');
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
     }
 
     $('#newestOption').click(function(event) {
         event.preventDefault();
         handleNewestOption();
-        $('#toggleButton').text('Newest');
     });
 
     $('#bestOption').click(function(event) {
         event.preventDefault(); 
         handleBestOption();
-        $('#toggleButton').text('Best');
     });
 
     $('#toggleButton').click(function() {
@@ -109,13 +126,58 @@
             $('#dropdownContent').hide();
         }
     });
-    
-    $(document).ready(function() {
-        var currCategory = "Main";
 
-        function updateCategory(categoryName) {
-        currCategory = categoryName;
-        $("#categoryName").text(currCategory);
+    function updateThreads(from = 0, to = 10) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        $.ajax({
+            url: '/feed/feedPostsDate',
+            type: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                from: from,
+                to: to,
+                order: currOrder,
+                category: currCategoryId,
+            },
+            success: function(data) {
+                console.log(data)
+                const threadsContainer = $('#threads');
+                threadsContainer.empty();
+                data.forEach(function(thread) {
+                    const formattedDate = formatDate(thread.enrollment_date);
+                    const threadElement = `
+                        <div class="thread">
+                            <div class="thread-info">
+                                <div class="thread-metadata">
+                                    <button class="vote-button" data-post-id="${thread.id}" data-value="1">+</button>
+                                    <button class="vote-button" data-post-id="${thread.id}" data-value="0">0</button>
+                                    <button class="vote-button" data-post-id="${thread.id}" data-value="-1">-</button>
+                                    <span class="thread-score">Post score: <span class="score-value">  ${thread.score}   </span></span>
+                                    <span class="thread-author">  @${thread.login},  ${thread.name}  </span>
+                                    <span class="thread-date"><span class="date-value"> &nbsp;${formattedDate}</span></span>
+                                </div>
+                            </div>
+                            <h2 class="thread-title">${thread.title}</h2><br><br><br>
+                            <p class="thread-content">${thread.content}</p>
+                        </div>`;
+                    threadsContainer.append(threadElement);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to get threads:', error);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        function updateCategory(categoryName, categoryId) {
+            currCategory = categoryName;
+            currCategoryId = categoryId;
+            $("#categoryName").text(currCategory);
+            updateThreads(0, 10);
         }
 
         $.ajax({
@@ -123,9 +185,9 @@
             type: 'GET',
             dataType: 'json',
             success: function(data) {
-                const categoriesList = $('#categories-list');
-                categoriesList.empty();
-                    
+                const topicsSidebar = $('#topicsSidebar');
+                topicsSidebar.empty();
+
                 $("#categoryName").text(currCategory);
 
                 data.forEach(function(category) {
@@ -134,15 +196,43 @@
                         .attr('href', '#')
                         .text(category.name)
                         .click(function() {
-                        updateCategory(category.name);
+                            updateCategory(category.name, category.id);
                         });
-                    $('#topicsSidebar').append(newLink);
+                    topicsSidebar.append(newLink);
                 });
             },
             error: function(xhr, status, error) {
                 console.error('Error while attempting to get categories:', error);
             }
         });
+
+        updateThreads(0, 10);
     });
+
+    $(document).on('click', '.vote-button', function() {
+    const postId = $(this).data('post-id');
+    const value = $(this).data('value');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    $.ajax({
+        url: '/post/vote',
+        type: 'POST',
+        headers: {
+                'Authorization': `Bearer ${refreshToken}`
+        },
+        data: {
+            id: postId,
+            value: value
+        },
+        success: function(response) {
+            console.log('Vote successful:', response);
+            // Обновить интерфейс, чтобы отобразить новое значение оценки
+            // Например, вы можете сделать это путем перезагрузки страницы или обновления только конкретного элемента.
+        },
+        error: function(xhr, status, error) {
+            console.error('Error while attempting to vote:', error);
+        }
+    });
+});
 </script>
 </html>

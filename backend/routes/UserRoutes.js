@@ -73,7 +73,7 @@ router.get('/', (req, res) => {
  * @returns {Error} 404 - User not found.
  */
 router.post('/', verifyToken, (req, res) => {
-    userLogin = req.query.login
+    userLogin = req.body.login
 
     const sql = `SELECT u.login, u.enrollment_date, u.name, u.description, u.reputation FROM users as u WHERE u.login = ?;`
     db.query(sql, [userLogin], (err, result) => {
@@ -140,7 +140,6 @@ router.post("/edit", verifyToken, editUserValidationChain(), (req, res) => {
     db.query(sql, [name, description, user.login], function (err, result) {
         if(err) console.log("error: " + err);
         else{
-            console.log(result);
             return res.status(200).json({result: result});
         }
     })
@@ -351,10 +350,10 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
         let accesToken = null
         let refreshToken = null
         if(rememberMe) {
-            accesToken = generateToken( userId, req.body.login, 1800 )
+            accesToken = generateToken( userId, req.body.login, 3600 )
             refreshToken = generateToken( userId, req.body.login, 604800 )
             //console.log(accesToken);
-            return res.cookie('refreshToken', refreshToken).header('Authorization', accesToken).json( {success: 'Login successful.'} )
+            return res.cookie('refreshToken', refreshToken).header('Authorization', accesToken).json( {success: 'Login successful.', user: req.body.login} )
         }
 
         return res.status(200).json({ success: 'Login successful.' })

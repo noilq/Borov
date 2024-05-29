@@ -13,7 +13,7 @@ const path = require('path')
  * /feed/feedPostsDate:
  *   post:
  *     summary: Returns posts for feed.
- *     description: Returns feed posts from x to y, sorted by newest/oldest.
+ *     description: Returns feed posts from x to y, sorted by newest/oldest, optionally filtered by category.
  *     parameters:
  *       - in: query
  *         name: from
@@ -33,6 +33,13 @@ const path = require('path')
  *           type: string
  *           enum: [ASC, DESC]
  *           default: DESC
+ *         description: Order of posts (ASC for oldest, DESC for newest)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: Category ID to filter posts.
  *     responses:
  *       200:
  *         description: Success.
@@ -45,34 +52,35 @@ const path = require('path')
  * @param {int} from.query.required - Starter pos.
  * @param {int} to.query.required - End pos.
  * @param {string} order.query - Optional param ('ASC' stands for old, 'DESC' stands for new), 'DESC' by default.
+ * @param {int} category.query - Category ID to filter posts.
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
 router.post('/feedPostsDate', verifyToken, (req, res) => {
-    let { userId, from, to, order } = req.query
-    
-    if(order !== 'ASC')
-        order = 'DESC'
+    let { userId, from, to, order, category } = req.body
+    console.log()
+    if(order !== 'ASC') order = 'DESC'
 
     let offset = parseInt(from)
     let limit = parseInt(to) - parseInt(from) + 1
 
-    let sql = `SELECT * FROM posts AS p WHERE p.owner_id = ? AND status_id != 3 ORDER BY enrollment_date ${order} LIMIT ?, ?;`
-
-    db.query(sql, [parseInt(userId), offset, limit], function(err, result){
-        if(err){
-            console.log(err)
-            return res.status(500).json({ error: 'Server error.'})
-        }
-        else{
-            result.forEach(res => {
-                CreateView(res.id, req.user.userId, (err, ress) => {
+    let sql = `SELECT p.id, p.enrollment_date, p.title, p.content, p.views, p.score, p.status_id, p.category_id, u.name, u.login FROM posts AS p JOIN users AS u ON p.owner_id = u.id WHERE p.status_id != 3 AND p.category_id = ? ORDER BY p.enrollment_date ${order} LIMIT ?, ?;`
+    
+    let params = [category, offset, limit];
+    
+    db.query(sql, params, function(err, result) {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ error: 'Server error.' })
+        } else {
+            result.forEach(post => {
+                /*CreateView(post.id, req.user.userId, (err) => {
                     if (err)
                         return res.status(500).json({ error: 'Database error.' })
-                })
+                })*/
             })
-            return res.status(200).json(result)
-        }   
+            return res.status(200).json(result);
+        }
     })
 })
 
@@ -81,7 +89,7 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
  * /feed/feedPostsScore:
  *   post:
  *     summary: Returns posts for feed.
- *     description: Returns feed posts from x to y, sorted by score.
+ *     description: Returns feed posts from x to y, sorted by score, optionally filtered by category.
  *     parameters:
  *       - in: query
  *         name: from
@@ -101,6 +109,13 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
  *           type: string
  *           enum: [ASC, DESC]
  *           default: DESC
+ *         description: Order of posts (ASC for lowest score, DESC for highest score)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: integer
+ *         required: false
+ *         description: Category ID to filter posts.
  *     responses:
  *       200:
  *         description: Success.
@@ -113,38 +128,36 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
  * @param {int} from.query.required - Starter pos.
  * @param {int} to.query.required - End pos.
  * @param {string} order.query - Optional param ('ASC' stands for old, 'DESC' stands for new), 'DESC' by default.
+ * @param {int} category.query - Category ID to filter posts.
  * @returns {object} 200 - Success.
  * @returns {Error} 500 - Server error.
  */
 router.post('/feedPostsScore', verifyToken, (req, res) => {
-    let { from, to, order } = req.query
+    let { from, to, order, category } = req.query
     
-    if(order !== 'ASC')
-        order = 'DESC'
+    if(order !== 'ASC') order = 'DESC'
 
     let offset = parseInt(from)
     let limit = parseInt(to) - parseInt(from) + 1
 
-    let sql = `SELECT * FROM posts AS p WHERE status_id != 3 ORDER BY p.score ${order} LIMIT ?, ?;`
+    let sql = `SELECT p.id, p.enrollment_date, p.title, p.content, p.views, p.score, p.status_id, p.category_id, u.name, u.login FROM posts AS p JOIN users AS u ON p.owner_id = u.id WHERE p.status_id != 3 AND p.category_id = ? ORDER BY p.score ${order} LIMIT ?, ?;`
+    let params = [category, offset, limit];
 
-    db.query(sql, [parseInt(userId), offset, limit], function(err, result){
-        if(err){
+    db.query(sql, params, function(err, result) {
+        if (err) {
             console.log(err)
-            return res.status(500).json({ error: 'Server error.'})
-        }
-        else{
-            result.forEach(res => {
-                CreateView(res.id, req.user.userId, (err, ress) => {
+            return res.status(500).json({ error: 'Server error.' })
+        } else {
+            result.forEach(post => {
+                /*CreateView(post.id, req.user.userId, (err) => {
                     if (err)
                         return res.status(500).json({ error: 'Database error.' })
-                })
+                })*/
             })
-            return res.status(200).json(result)
-        }   
+            return res.status(200).json(result);
+        }
     })
 })
-
-
 
 
 
@@ -208,7 +221,7 @@ router.post('/userPostsDate', verifyToken, (req, res) => {
     let offset = parseInt(from)
     let limit = parseInt(to) - parseInt(from) + 1
 
-    let sql = `SELECT * FROM posts AS p WHERE p.owner_id = ? AND status_id != 3 ORDER BY enrollment_date ${order} LIMIT ?, ?;`
+    let sql = `SELECT p.id, p.enrollment_date, p.title, p.content, p.views, p.score, p.status_id, p.category_id, u.name, u.login FROM posts AS p WHERE p.owner_id = ? AND status_id != 3 ORDER BY enrollment_date ${order} LIMIT ?, ?;`
 
     db.query(sql, [parseInt(userId), offset, limit], function(err, result){
         if(err){
@@ -217,10 +230,10 @@ router.post('/userPostsDate', verifyToken, (req, res) => {
         }
         else{
             result.forEach(res => {
-                CreateView(res.id, req.user.userId, (err, ress) => {
+                /*CreateView(res.id, req.user.userId, (err, ress) => {
                     if (err)
                         return res.status(500).json({ error: 'Database error.' })
-                })
+                })*/
             })
             return res.status(200).json(result)
         }   
@@ -292,10 +305,10 @@ router.post('/userPostsScore', verifyToken, (req, res) => {
         }
         else{
             result.forEach(res => {
-                CreateView(res.id, req.user.userId, (err, ress) => {
+                /*CreateView(res.id, req.user.userId, (err, ress) => {
                     if (err)
                         return res.status(500).json({ error: 'Database error.' })
-                })
+                })*/
             })
             return res.status(200).json(result)
         }    
@@ -352,6 +365,16 @@ function CreateView(postId, userId, callback) {
  */
 router.get('/', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/feed.html"), function (err, data) {
+            if(err) console.error(err)
+        else{
+            res.end(data)
+        
+        }
+    })
+})
+
+router.get('/public/profile-icon.png', (req, res) => {
+    require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/public/profile-icon.png"), function (err, data) {
             if(err) console.error(err)
         else{
             res.end(data)
