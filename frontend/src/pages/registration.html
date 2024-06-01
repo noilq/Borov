@@ -66,14 +66,25 @@
                         },
                         success: function(response) {
                             console.log('Success');
-                            window.location.href = '/user/profile.html';
+                            window.location.href = '/user/login';
                         },
-                        error: function(error) {
-                            console.log(error);
+                        error: function(xhr, status, error) {
+                            if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.length > 0) {
+                                const errorMessage = xhr.responseJSON.errors[0].msg;
+                                console.error('Error while attempting to create user:', errorMessage);
+                                showError(errorMessage);
+                            } else {
+                                console.error('Error while attempting to create user:', error);
+                                showError('An error occurred while attempting to create user.');
+                            }
                         }
                     });
                 }
             });
+
+            function showError(message) {
+                alert(message)
+            }
         });
     </script>
 </body>

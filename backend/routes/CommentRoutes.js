@@ -25,6 +25,40 @@ router.get('/', verifyToken, (req, res) => {
     })
 })
 
+router.get('/getCommentsChain', verifyToken, (req, res) => {
+    post_id = req.query.post_id
+    
+    const sql =  `
+        SELECT
+        c.id,
+        c.enrollment_date,
+        c.content,
+        c.status_id,
+        c.comment_parent_id,
+        c.post_parent_id,
+        (
+            SELECT IFNULL(SUM(v.value), 0)
+            FROM votes AS v
+            WHERE v.comment_id = c.id
+        ) AS score,
+        u.login,
+        u.name AS username
+    FROM
+        comments AS c
+    JOIN
+        users AS u ON c.owner_id = u.id
+    WHERE
+        c.post_parent_id = ? AND c.status_id != 3;`
+
+    db.query(sql, [post_id], (err, results) => {
+        if (err)
+            return res.json(err);
+        if (results.length == 0 || results[0].status_id == 3)
+            return res.status(404).json({ error: 'No comments found for the given post.' });
+        res.json(results);
+    });
+})
+
 router.post('/create', verifyToken, commentValidationChain(), async (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -160,39 +194,55 @@ async function CommentExisting(postId, commId) {
 }
 
 router.post('/vote', verifyToken, (req, res) => {
-    const postId = req.query.id
-    const value = req.query.value
+    const commentId = req.body.id
+    const value = req.body.value
     const user = req.user
-    
-    if(value !== '1' && value !== '0' && value !== '-1')
-        return res.status(400).json({ err: 'Wrong vote value.'})
-    
+
+    if (value !== '1' && value !== '0' && value !== '-1')
+        return res.status(400).json({ err: 'Wrong vote value.' })
+
     let sql = `SELECT * FROM comments WHERE id = ?`
-    db.query(sql, [postId], (err, result) => {
-        if(result.length == 0 || result[0].status_id == 3)
-            return res.status(404).json({ error: 'Comment not found.'})
-        else{
-            sql = `SELECT * FROM votes WHERE user_id = ? AND comment_id = ?`
-            db.query(sql, [user.userId, postId], (err, result) => {
-                if(result.length == 0){
-                    sql = `INSERT INTO votes (value, user_id, comment_id ) VALUES (?, ?, ?)`
-                    db.query(sql, [value, user.userId, postId], (err, result) => {
-                        if(err)
-                            return res.json(err)
-                
-                        return res.json(result)
+    db.query(sql, [commentId], (err, commentResult) => {
+        if (err) return res.status(500).json({ error: 'Database error.', details: err })
+        if (commentResult.length === 0 || commentResult[0].status_id === 3)
+            return res.status(404).json({ error: 'Comment not found.' })
+
+        sql = `SELECT * FROM votes WHERE user_id = ? AND comment_id = ?`
+        db.query(sql, [user.userId, commentId], (err, voteResult) => {
+            if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+            if (voteResult.length === 0) {
+                sql = `INSERT INTO votes (value, user_id, comment_id) VALUES (?, ?, ?)`
+                db.query(sql, [value, user.userId, commentId], (err, insertResult) => {
+                    if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                    const updatedScore = parseInt(commentResult[0].score) + parseInt(value)
+                    sql = `UPDATE comments SET score = ? WHERE id = ?`
+                    db.query(sql, [updatedScore, commentId], (err, updateScoreResult) => {
+                        if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                        return res.json({ newScore: updatedScore - 1})
+                    });
+                });
+            } else {
+                const oldValue = voteResult[0].value
+                const newValue = parseInt(value)
+                const updatedValue = newValue - oldValue
+
+                sql = `UPDATE votes SET value = ? WHERE user_id = ? AND comment_id = ?`
+                db.query(sql, [newValue, user.userId, commentId], (err, updateResult) => {
+                    if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                    const updatedScore = parseInt(commentResult[0].score) + updatedValue
+                    sql = `UPDATE comments SET score = ? WHERE id = ?`
+                    db.query(sql, [updatedScore, commentId], (err, updateScoreResult) => {
+                        if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                        return res.json({ newScore: updatedScore - 1 })
                     })
-                }else{
-                    sql = `UPDATE votes SET value = ? WHERE user_id = ? AND comment_id = ?`
-                    db.query(sql, [value, user.userId, postId], (err, result) => {
-                    if(err)
-                        return res.json(err)
-        
-                    return res.json(result)
-                    })
-                }  
-            })
-        }
+                })
+            }
+        })
     })
 })
 

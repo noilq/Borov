@@ -263,3 +263,76 @@ h2 {
     border-radius: 5px;
     cursor: pointer;
 }
+
+#updatePostButton {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.editPostButton {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.deletePostButton {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+
+
+
+.thread {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border-top: 2px dashed #d3d3d3;
+}
+
+.thread-title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+    float: left;
+}
+
+.thread-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.thread-metadata {
+    display: flex;
+    align-items: center;
+}
+
+.thread-score {
+    margin-right: 10px;
+}
+
+.score-value {
+    font-weight: bold;
+}
+
+.score-value-post {
+    font-weight: bold;
+}
+
+.score-value-comment {
+    font-weight: bold;
+}

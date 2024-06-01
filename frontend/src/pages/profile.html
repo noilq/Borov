@@ -32,9 +32,29 @@
                 </div>
                 <div class="input-group">
                     <input id="saveChangesButton" type="submit" value="Save changes">
-                    <input id="returnToMain" type="submit" value="Return to main page" style="margin-top: 10px;">
                 </div>
             </div>
+            <div class="input-group">
+                <input id="returnToMain" type="submit" value="Return to main page" style="margin-top: 10px;">
+                <input id="logout" type="submit" value="Logout" style="margin-top: 10px;">
+            </div>
+            <div class="edit-post-form" id="edit-post-form" style="display: none;">
+                <h3>Edit Post</h3>
+                <div class="input-group">
+                    <label for="edit-post-title">New Title</label>
+                    <input type="text" id="edit-post-title" required>
+                </div>
+                <div class="input-group">
+                    <label for="edit-post-content">New Content</label>
+                    <textarea id="edit-post-content" required></textarea>
+                </div>
+            
+                <div class="input-group">
+                    <input id="edit-post-button" type="submit" value="Save Changes">
+                </div>
+            </div>
+            
+            <div id="userPosts"></div>
         </div>
     </div>
 <script>
@@ -88,11 +108,40 @@ $(document).ready(function() {
                 login: login
             },
             success: function(response) {
-                $('#profileName').text(response.name);
-                $('#profileLogin').text(response.login);
-                $('#profileDescription').text(response.description);
-                $('#profileKarma').text(response.reputation);
-            },
+            $('#profileName').text(response.name);
+            $('#profileLogin').text(response.login);
+            $('#profileDescription').text(response.description);
+            $('#profileKarma').text(response.reputation);
+
+            $('#userPosts').empty();
+
+            response.posts.forEach(post => {
+                const formattedDate = new Date(post.enrollment_date).toLocaleDateString();
+
+                let postElement = `
+                    <div class="thread" id="thread-${post.id}">
+                        <button class="editPostButton" data-post-id="${post.id}">Edit</button>
+                        <button class="deletePostButton" data-post-id="${post.id}">Delete</button>
+                        <div class="thread-info">
+                            <div class="thread-metadata">
+                                <span class="thread-score">Post score: <span data-post-id="${post.id}" class="score-value score-value-post">${post.score}</span></span>
+                                <span class="thread-author">@${response.login}, ${response.name}</span>
+                                <span class="thread-date"><span class="date-value">&nbsp;${formattedDate}</span></span>`;
+                if (post.status_id == 2)
+                    postElement += `<span class="thread-date"><span class="gray-text">&nbsp; edited</span></span>`;
+
+                postElement += `
+                            </div>
+                        </div>
+                        <h2 class="thread-title">${post.title}</h2><br><br><br>
+                        <p class="thread-content">${post.content}</p>`;
+
+                
+                postElement += `</div>`;
+
+                $('#userPosts').append(postElement);
+            });
+        },
             error: function(xhr, status, error) {
                 console.error(error);
             }
@@ -100,7 +149,92 @@ $(document).ready(function() {
     }
 
     loadUserProfile();
+
+    $('#logout').click(function() {
+        deleteAllCookies();
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/user/login';
+    });
+
+    function deleteAllCookies() {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+    }
 });
+
+$(document).on('click', '.deletePostButton', function() {
+    const postId = $(this).data('post-id');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    $.ajax({
+        url: `/post/delete?id=${postId}`,
+        type: 'POST',
+        headers: {
+            'Authorization': `Bearer ${refreshToken}`
+        },
+        success: function(response) {
+            window.location.href = '/user/profile';
+        },
+        error: function(xhr, status, error) {
+            console.error('Error while attempting to delete post:', error);
+        }
+    });
+});
+
+$(document).on('click', '.editPostButton', function() {
+    const postId = $(this).data('post-id');
+    
+    const postTitle = $(`#thread-${postId} .thread-title`).text();
+    const postContent = $(`#thread-${postId} .thread-content`).text();
+
+    $('#edit-post-title').val(postTitle);
+    $('#edit-post-content').val(postContent);
+    
+    $('#edit-post-form').show();
+
+    $('#edit-post-button').click(function(event) {
+        event.preventDefault();
+
+        const newTitle = $('#edit-post-title').val();
+        const newContent = $('#edit-post-content').val();
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        $.ajax({
+            type: "POST",
+            url: `/post/edit?id=${postId}`,
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                title: newTitle,
+                content: newContent
+            },
+            success: function(response) {
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.length > 0) {
+                    const errorMessage = xhr.responseJSON.errors[0].msg;
+                    console.error('Error while attempting to edit thread:', errorMessage);
+                    showError(errorMessage);
+                } else {
+                    console.error('Error while attempting to edit thread:', error);
+                    showError('An error occurred while attempting to edit thread.');
+                }
+            }
+        });
+    });
+});
+
+function showError(message) {
+    alert(message)
+}
+
 </script>
 </body>
 </html>

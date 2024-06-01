@@ -13,7 +13,6 @@
         <a href="/user/profile">
             <img id="headerProfileIcon" src="public/profile-icon.png" alt="Profile Icon" class="profile-icon">
         </a>
-        
     </div>
     <div id="forumPage">
         <div id="topicsSidebar" class="sidebar"></div>
@@ -34,11 +33,12 @@
                         <textarea id="thread-content" required></textarea>
                     </div>
                     <div class="input-group">
-                        <label for="thread-images">Фотографии (максимум 3)</label>
-                        <input type="file" id="thread-images" accept="image/*" multiple>
+                        <label for="category-select">Category</label>
+                        <select id="category-select">
+                        </select>
                     </div>
                     <div class="input-group">
-                        <input type="submit" value="Create thread">
+                        <input id="create-thread-button" type="submit" value="Create thread">
                     </div>
                 </div>
             </div>
@@ -118,14 +118,77 @@
     });
 
     $('#toggleButton').click(function() {
-        $('#dropdownContent').toggle();
+        $('.dropdown-content').toggle();
     });
 
     $(document).click(function(event) {
-        if (!$(event.target).closest('#toggleButton').length && !$(event.target).closest('#dropdownContent').length) {
-            $('#dropdownContent').hide();
+        if (!$(event.target).closest('#toggleButton').length && !$(event.target).closest('.dropdown-content').length) {
+            $('.dropdown-content').hide();
         }
     });
+
+    $(document).on('click', '.create-thread-btn', function() {
+        $('#create-thread-form').toggle();
+        loadCategories();
+    });
+
+    function loadCategories() {
+        $.ajax({
+            url: '/post/getCategories',
+            type: 'GET',
+            success: function(response) {
+                const categorySelect = $('#category-select');
+                categorySelect.empty();
+
+                response.forEach(function(category) {
+                    const option = $('<option></option>')
+                        .val(category.id)
+                        .text(category.name);
+                    categorySelect.append(option);
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to get categories:', error);
+            }
+        });
+    }
+
+    $(document).on('click', '#create-thread-button', function(event) {
+        event.preventDefault();
+        const refreshToken = localStorage.getItem('refreshToken');
+        const threadData = {
+            title: $('#thread-title').val(),
+            content: $('#thread-content').val(),
+            category_id: $('#category-select').val()
+        };
+        
+        $.ajax({
+            url: '/post/create',
+            type: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: threadData,
+            success: function(response) {
+                console.log('Thread created successfully:', response);
+                window.location.href = '/feed';
+            },
+            error: function(xhr, status, error) {
+                if (xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.length > 0) {
+                    const errorMessage = xhr.responseJSON.errors[0].msg;
+                    console.error('Error while attempting to create thread:', errorMessage);
+                    showError(errorMessage);
+                } else {
+                    console.error('Error while attempting to create thread:', error);
+                    showError('An error occurred while attempting to create thread.');
+                }
+            }
+        });
+    });
+
+    function showError(message) {
+        alert(message)
+    }
 
     function updateThreads(from = 0, to = 10) {
         const refreshToken = localStorage.getItem('refreshToken');
@@ -148,21 +211,33 @@
                 threadsContainer.empty();
                 data.forEach(function(thread) {
                     const formattedDate = formatDate(thread.enrollment_date);
-                    const threadElement = `
-                        <div class="thread">
-                            <div class="thread-info">
-                                <div class="thread-metadata">
-                                    <button class="vote-button" data-post-id="${thread.id}" data-value="1">+</button>
-                                    <button class="vote-button" data-post-id="${thread.id}" data-value="0">0</button>
-                                    <button class="vote-button" data-post-id="${thread.id}" data-value="-1">-</button>
-                                    <span class="thread-score">Post score: <span class="score-value">  ${thread.score}   </span></span>
-                                    <span class="thread-author">  @${thread.login},  ${thread.name}  </span>
-                                    <span class="thread-date"><span class="date-value"> &nbsp;${formattedDate}</span></span>
-                                </div>
-                            </div>
-                            <h2 class="thread-title">${thread.title}</h2><br><br><br>
-                            <p class="thread-content">${thread.content}</p>
-                        </div>`;
+                    let threadElement = `
+                    <div class="thread">
+                        <div class="thread-info">
+                            <div class="thread-metadata">
+                                <button class="vote-button-post" data-post-id="${thread.id}" data-value="1">+</button>
+                                <button class="vote-button-post" data-post-id="${thread.id}" data-value="0">0</button>
+                                <button class="vote-button-post" data-post-id="${thread.id}" data-value="-1">-</button>
+                                <span class="thread-score">Post score: <span data-post-id="${thread.id}" class="score-value, score-value-post">${thread.score}</span></span>
+                                <span class="thread-author">@${thread.login}, ${thread.name}</span>
+                                <span class="thread-date"><span class="date-value">&nbsp;${formattedDate}</span></span>`
+                    if (thread.status_id == 2)
+                        threadElement += `<span class="thread-date"><span class="gray-text">&nbsp; edited</span></span>`
+                    
+                    threadElement += `
+                        </div>
+                    </div>
+                        <h2 class="thread-title">${thread.title}</h2><br><br><br>
+                        <p class="thread-content">${thread.content}</p>`;
+
+                    if (thread.comments_count > 0) {
+                        threadElement += `
+                        <button class="show-comments-button" data-post-id="${thread.id}">Show Comments (${thread.comments_count})</button>
+                    <div class="comments-section" id="comments-${thread.id}" style="display:none;"></div>`;
+                    }
+                    
+                    threadElement += `</div>`;
+
                     threadsContainer.append(threadElement);
                 });
             },
@@ -209,30 +284,120 @@
         updateThreads(0, 10);
     });
 
-    $(document).on('click', '.vote-button', function() {
-    const postId = $(this).data('post-id');
-    const value = $(this).data('value');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    $.ajax({
-        url: '/post/vote',
-        type: 'POST',
-        headers: {
+    $(document).on('click', '.vote-button-post', function() {
+        const postId = $(this).data('post-id');
+        const value = $(this).data('value');
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        $.ajax({
+            url: '/post/vote',
+            type: 'POST',
+            headers: {
                 'Authorization': `Bearer ${refreshToken}`
-        },
-        data: {
-            id: postId,
-            value: value
-        },
-        success: function(response) {
-            console.log('Vote successful:', response);
-            // Обновить интерфейс, чтобы отобразить новое значение оценки
-            // Например, вы можете сделать это путем перезагрузки страницы или обновления только конкретного элемента.
-        },
-        error: function(xhr, status, error) {
-            console.error('Error while attempting to vote:', error);
-        }
+            },
+            data: {
+                id: postId,
+                value: value
+            },
+            success: function(response) {
+                const postScoreElement = $(`.score-value-post[data-post-id="${postId}"]`);
+                postScoreElement.text(response.newScore);
+                // Обновить интерфейс, чтобы отобразить новое значение оценки
+                // нет иди нахуй сука пидорас блять обнови страницу лмао 
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to vote:', error);
+            }
+        });
     });
+
+    $(document).on('click', '.vote-button-comment', function() {
+        const commentId = $(this).data('comment-id');
+        const value = $(this).data('value');
+        const refreshToken = localStorage.getItem('refreshToken');
+        $.ajax({
+            url: '/comment/vote',
+            type: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                id: commentId,
+                value: value
+            },
+            success: function(response) {
+                const commentScoreElement = $(`.score-value-comment[data-comment-id="${commentId}"]`);
+                commentScoreElement.text(response.newScore);
+                // Обновить интерфейс, чтобы отобразить новое значение оценки
+                // нет иди нахуй сука пидорас блять обнови страницу лмао 
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to vote:', error);
+            }
+        });
+    });
+
+    $(document).on('click', '.show-comments-button', function() {
+    const postId = $(this).data('post-id');
+    const commentsSection = $(`#comments-${postId}`);
+    
+    if (commentsSection.is(':visible')) {
+        commentsSection.hide().empty();
+    } else {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        $.ajax({
+            url: '/comment/getCommentsChain',
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            },
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                commentsSection.empty();
+                console.log(response)
+                if (response.error) {
+                    commentsSection.html(`<p>${response.error}</p>`);
+                } else {
+                    response.forEach(function(comment) {
+                        const formattedDate = formatDate(comment.enrollment_date);
+                        console.log(comment)
+
+                        let commentElement = `  
+                        <div class="messages" id="messages">
+                            <div class="message">
+                                <div class="message-header">
+                                    <div class="vote-buttons">
+                                        <button class="vote-button-comment" data-comment-id="${comment.id}" data-value="1">+</button>
+                                        <button class="vote-button-comment" data-comment-id="${comment.id}" data-value="0">0</button>
+                                        <button class="vote-button-comment" data-comment-id="${comment.id}" data-value="-1">-</button>
+                                        <span class="score">Comment score: <span data-comment-id="${comment.id}" class="score-value-comment">${comment.score}</span></span>
+                                        <span class="thread-author">&nbsp;&nbsp;@${comment.login}, ${comment.username}</span>
+                                        <span class="thread-date"><span class="date-value">&nbsp;${formattedDate}</span></span>`
+                        if (comment.status_id == 2)
+                            commentElement += `<span class="thread-date"><span class="gray-text">&nbsp; edited</span></span>`
+
+                        commentElement += `
+                                    </div>
+                                </div>
+                                <p>${comment.content}</p>
+                            </div>
+                        </div>`
+                        commentsSection.append(commentElement);
+                    });
+                }
+                commentsSection.show();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error while attempting to get comments:', error);
+            }
+        });
+    }
 });
+
+
+
 </script>
 </html>

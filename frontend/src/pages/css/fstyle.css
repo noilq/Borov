@@ -370,6 +370,14 @@ h2 {
     font-weight: bold;
 }
 
+.score-value-post {
+    font-weight: bold;
+}
+
+.score-value-comment {
+    font-weight: bold;
+}
+
 .messages {
     margin-top: 20px;
 }
@@ -389,7 +397,7 @@ h2 {
 
 .vote-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
 }
 
@@ -419,4 +427,96 @@ h2 {
     border-radius: 10px;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
     margin: 20px 0;
+}
+
+.vote-button{
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 1px;
+}
+
+.vote-button-post {
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 1px;
+}
+
+.vote-button-comment{
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 1px;
+}
+
+.vote-button:hover {
+    background-color: #45a049;
+}
+
+.vote-button:active {
+    transform: scale(0.95);
+}
+
+.vote-button[data-value="1"] {
+    color: #fff;
+}
+
+.vote-button[data-value="0"] {
+    color: #fff; 
+}
+
+.vote-button[data-value="-1"] {
+    color: #fff;
+}
+
+.toggle-btn:hover {
+    background-color: #45a049;
+}
+
+.toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.create-thread-btn:active{
+    transform: scale(0.95);
+}
+
+.show-comments-button {
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    margin: 1px;
+}
+
+.show-comments-button:hover {
+    background-color: #45a049;
+}
+
+.show-comments-button:active{
+    transform: scale(0.95);
+}
+
+.gray-text {
+    color: gray;
 }

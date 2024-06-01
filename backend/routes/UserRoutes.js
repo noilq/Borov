@@ -53,7 +53,7 @@ router.get('/', (req, res) => {
  *     summary: Returns user data.
  *     description: Returns user data by userd login.
  *     parameters:
- *       - in: query
+ *       - in: body
  *         name: login
  *         schema:
  *           type: string
@@ -73,15 +73,63 @@ router.get('/', (req, res) => {
  * @returns {Error} 404 - User not found.
  */
 router.post('/', verifyToken, (req, res) => {
-    userLogin = req.body.login
+    const login = req.body.login;
+    
+    const sql = `
+        SELECT 
+            u.login, 
+            u.enrollment_date AS user_enrollment_date, 
+            u.name, 
+            u.description, 
+            (SELECT IFNULL(SUM(p.score), 0) FROM posts AS p WHERE p.owner_id = u.id) AS reputation,
+            p.id AS post_id,
+            p.title AS post_title,
+            p.content AS post_content,
+            p.enrollment_date AS post_enrollment_date,
+            p.score AS post_score,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comments_count
+        FROM 
+            users AS u
+        LEFT JOIN 
+            posts AS p ON u.id = p.owner_id
+        WHERE 
+            u.login = ? AND (p.status_id != 3 OR p.status_id IS NULL);`;
 
-    const sql = `SELECT u.login, u.enrollment_date, u.name, u.description, u.reputation FROM users as u WHERE u.login = ?;`
-    db.query(sql, [userLogin], (err, result) => {
-        if (err) 
-            return res.json(err)
-        if (result.length == 0)
-            return res.status(404).json({ error: 'User not found.' })
-        res.json(result[0])
+    db.query(sql, [login], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Database error.', details: err })
+        }
+        
+        // Group user information and posts
+        if (result.length > 0) {
+            const userInfo = {
+                login: result[0].login,
+                enrollment_date: result[0].user_enrollment_date,
+                name: result[0].name,
+                description: result[0].description,
+                reputation: result[0].reputation,
+                total_post_score: result[0].total_post_score,
+                posts: []
+            }
+
+            result.forEach(row => {
+                if (row.post_id) {
+                    userInfo.posts.push({
+                        id: row.post_id,
+                        title: row.post_title,
+                        content: row.post_content,
+                        enrollment_date: row.post_enrollment_date,
+                        score: row.post_score,
+                        comments_count: row.comments_count
+                    })
+                }
+            })
+
+            res.json(userInfo)
+        } else {
+            res.status(404).json({ error: 'User not found.' })
+        }
     })
 })
 

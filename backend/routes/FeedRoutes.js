@@ -64,7 +64,32 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
     let offset = parseInt(from)
     let limit = parseInt(to) - parseInt(from) + 1
 
-    let sql = `SELECT p.id, p.enrollment_date, p.title, p.content, p.views, p.score, p.status_id, p.category_id, u.name, u.login FROM posts AS p JOIN users AS u ON p.owner_id = u.id WHERE p.status_id != 3 AND p.category_id = ? ORDER BY p.enrollment_date ${order} LIMIT ?, ?;`
+    let sql = `
+    SELECT 
+        p.id, 
+        p.enrollment_date, 
+        p.title, 
+        p.content, 
+        p.views, 
+        p.score, 
+        p.status_id, 
+        p.category_id, 
+        u.name, 
+        u.login,
+        (SELECT COUNT(*) FROM comments AS c WHERE c.post_parent_id = p.id) AS comments_count
+    FROM 
+        posts AS p 
+    JOIN 
+        users AS u 
+    ON 
+        p.owner_id = u.id 
+    WHERE 
+        p.status_id != 3 
+        AND p.category_id = ? 
+    ORDER BY 
+        p.enrollment_date ${order} 
+    LIMIT ?, ?;
+`;
     
     let params = [category, offset, limit];
     

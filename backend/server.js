@@ -41,7 +41,7 @@ const swaggerOptions = {
   
 const swaggerSpec = swaggerJSDoc(swaggerOptions)
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)

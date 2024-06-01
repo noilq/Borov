@@ -176,52 +176,50 @@ router.post('/vote', verifyToken, (req, res) => {
     const user = req.user
 
     if (value !== '1' && value !== '0' && value !== '-1')
-        return res.status(400).json({ err: 'Wrong vote value.'})
+        return res.status(400).json({ err: 'Wrong vote value.' })
 
     let sql = `SELECT * FROM posts WHERE id = ?`
     db.query(sql, [postId], (err, postResult) => {
+        if (err) return res.status(500).json({ error: 'Database error.', details: err })
         if (postResult.length === 0 || postResult[0].status_id === 3)
-            return res.status(404).json({ error: 'Post not found.'})
-        else {
-            sql = `SELECT * FROM votes WHERE user_id = ? AND post_id = ?`
-            db.query(sql, [user.userId, postId], (err, voteResult) => {
-                if (voteResult.length === 0) {
-                    sql = `INSERT INTO votes (value, user_id, post_id ) VALUES (?, ?, ?)`
-                    db.query(sql, [value, user.userId, postId], (err, insertResult) => {
-                        if (err)
-                            return res.json(err)
+            return res.status(404).json({ error: 'Post not found.' })
 
-                        const updatedScore = parseInt(postResult[0].score) + parseInt(value)
-                        sql = `UPDATE posts SET score = ? WHERE id = ?`
-                        db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
-                            if (err)
-                                return res.json(err)
+        sql = `SELECT * FROM votes WHERE user_id = ? AND post_id = ?`
+        db.query(sql, [user.userId, postId], (err, voteResult) => {
+            if (err) return res.status(500).json({ error: 'Database error.', details: err })
 
-                            return res.json(insertResult)
-                        });
-                    });
-                } else {
-                    const oldValue = voteResult[0].value
-                    const newValue = parseInt(value)
-                    const updatedValue = newValue - oldValue
+            if (voteResult.length === 0) {
+                sql = `INSERT INTO votes (value, user_id, post_id) VALUES (?, ?, ?)`
+                db.query(sql, [value, user.userId, postId], (err, insertResult) => {
+                    if (err) return res.status(500).json({ error: 'Database error.', details: err })
 
-                    sql = `UPDATE votes SET value = ? WHERE user_id = ? AND post_id = ?`
-                    db.query(sql, [newValue, user.userId, postId], (err, updateResult) => {
-                        if (err)
-                            return res.json(err)
+                    const updatedScore = parseInt(postResult[0].score) + parseInt(value)
+                    sql = `UPDATE posts SET score = ? WHERE id = ?`
+                    db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
+                        if (err) return res.status(500).json({ error: 'Database error.', details: err })
 
-                        const updatedScore = parseInt(postResult[0].score) + updatedValue
-                        sql = `UPDATE posts SET score = ? WHERE id = ?`
-                        db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
-                            if (err)
-                                return res.json(err)
-
-                            return res.json(updateResult)
-                        })
+                        return res.json({ newScore: updatedScore })
                     })
-                }
-            })
-        }
+                })
+            } else {
+                const oldValue = voteResult[0].value
+                const newValue = parseInt(value)
+                const updatedValue = newValue - oldValue
+
+                sql = `UPDATE votes SET value = ? WHERE user_id = ? AND post_id = ?`
+                db.query(sql, [newValue, user.userId, postId], (err, updateResult) => {
+                    if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                    const updatedScore = parseInt(postResult[0].score) + updatedValue
+                    sql = `UPDATE posts SET score = ? WHERE id = ?`
+                    db.query(sql, [updatedScore, postId], (err, updateScoreResult) => {
+                        if (err) return res.status(500).json({ error: 'Database error.', details: err })
+
+                        return res.json({ newScore: updatedScore })
+                    })
+                })
+            }
+        })
     })
 })
 
@@ -241,8 +239,8 @@ router.get('/getCategories', (req, res) => {
 
     db.query(sql, (err, result) => {
         if (err) {
-            console.error('Ошибка при выполнении запроса:', err);
-            return res.status(500).json({ message: 'Ошибка при получении категорий', error: err });
+            console.error('Error while attemptig to get categories:', err);
+            return res.status(500).json({ message: 'Error while attemptig to get categories', error: err });
         }
 
         return res.status(200).json(result);
