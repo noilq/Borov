@@ -76,7 +76,7 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
         p.category_id, 
         u.name, 
         u.login,
-        (SELECT COUNT(*) FROM comments AS c WHERE c.post_parent_id = p.id) AS comments_count
+        (SELECT COUNT(*) FROM comments AS c WHERE c.post_parent_id = p.id AND c.status_id != 3) AS comments_count
     FROM 
         posts AS p 
     JOIN 

@@ -50,35 +50,8 @@
                 </div>
             </div>
             <div class="threads" id="threads"></div>
-            <div class="thread" id="threadContent">
-                <div class="thread-info">
-                    <div class="thread-metadata">
-                        <span class="thread-score">Post score: <span class="score-value">0</span></span>
-                        <span class="thread-author">Post author</span>
-                        <span class="thread-date">Enrollment Date: <span class="date-value">2024-01-01</span></span>
-                    </div>
-                </div>
-                <h2 class="thread-title">Title</h2><br><br><br>
-                <p class="thread-content">Content</p>
-                <div class="messages" id="messages">
-                    <div class="message">
-                        <div class="message-header">
-                            <div class="vote-buttons">
-                                <button class="upvote-button">+</button>
-                                <span class="score">0</span>
-                                <button class="downvote-button">-</button>
-                            </div>
-                            <span class="message-author">Автор комментария</span>
-                            <span class="message-author-login">Логин автора</span>
-                        </div>
-                        <p>Содержание комментария</p>
-                    </div>
-                </div>
-                <div class="message-form">
-                    <textarea id="new-message" class="message-input" placeholder="Написать сообщение"></textarea>
-                    <button class="send-button">Send</button>
-                </div>
-            </div>
+            
+            <button id="loadMorePosts">Load more posts</button>
         </div>
     </div>
 </body>
@@ -86,6 +59,7 @@
     let currCategory = "General";
     let currCategoryId = "1";
     let currOrder = "DESC";
+    let postsPosition = 0;
 
     function handleNewestOption() {
         currOrder = "DESC";
@@ -208,7 +182,7 @@
             success: function(data) {
                 console.log(data)
                 const threadsContainer = $('#threads');
-                threadsContainer.empty();
+                //threadsContainer.empty();
                 data.forEach(function(thread) {
                     const formattedDate = formatDate(thread.enrollment_date);
                     let threadElement = `
@@ -228,15 +202,22 @@
                         </div>
                     </div>
                         <h2 class="thread-title">${thread.title}</h2><br><br><br>
-                        <p class="thread-content">${thread.content}</p>`;
-
-                    if (thread.comments_count > 0) {
+                        <p class="thread-content">${thread.content}</p>
+                        <button class="post-add-comment-button" data-post-id="${thread.id}">Add comment</button>
+                        <div class="message-form" id="comment-form-${thread.id}" style="display: none;">
+                            <textarea class="message-input" placeholder="Your comment"></textarea>
+                            <button class="send-button">Send</button>
+                        </div>
+                        `;
+                        if (thread.comments_count > 0) {
+                            threadElement += `
+                            <button class="show-comments-button" data-post-id="${thread.id}">Show Comments (${thread.comments_count})</button>
+                            <div class="comments-section" id="comments-${thread.id}" style="display:none;"></div>`;
+                        }
+                        
                         threadElement += `
-                        <button class="show-comments-button" data-post-id="${thread.id}">Show Comments (${thread.comments_count})</button>
-                    <div class="comments-section" id="comments-${thread.id}" style="display:none;"></div>`;
-                    }
-                    
-                    threadElement += `</div>`;
+                        
+                    </div>`;
 
                     threadsContainer.append(threadElement);
                 });
@@ -282,6 +263,80 @@
         });
 
         updateThreads(0, 10);
+        postsPosition = 10;
+
+        $(document).on('click', '#loadMorePosts', function() {
+            updateThreads(postsPosition - 1, postsPosition + 10);
+            postsPosition += 10;
+        });
+
+
+        $(document).on('click', '.post-add-comment-button', function() {
+            const currentPostId = $(this).data('post-id');
+            currentCommentId = null;
+            showCommentForm(currentPostId);
+        });
+
+        function showCommentForm(postId) {
+            $(`#comment-form-${postId}`).show();
+        }
+
+        function hideCommentForm(postId, commentId = null) {
+            if (commentId) {
+                $(`#comment-form-comment-${commentId}`).hide();
+                $(`#comment-form-comment-${commentId} .message-input`).val('');
+            } else {
+                $(`#comment-form-${postId}`).hide();
+                $(`#comment-form-${postId} .message-input`).val('');
+            }
+            currentPostId = null;
+            currentCommentId = null;
+        }
+        $(document).on('click', '.send-button', function() {
+            const content = $(this).siblings('.message-input').val();
+            const commentFormId = $(this).closest('.message-form').attr('id');
+            const [_, entity, id] = commentFormId.split('-');
+            const parentId = entity === 'comment' ? id : null;
+            const postId = entity === 'post' ? id : $(this).closest('.thread').find('.post-add-comment-button').data('post-id');
+            
+            if (content) {
+                const commentData = { content, post_parent_id: postId };
+                if (parentId) {
+                    commentData.comment_parent_id = parentId;
+                }
+                addComment(commentData, postId, parentId);
+            }
+        });
+
+        function addComment(commentData, postId, commentId) {
+            const refreshToken = localStorage.getItem('refreshToken');
+            $.ajax({
+                url: '/comment/create',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': `Bearer ${refreshToken}`
+                },
+                data: JSON.stringify(commentData),
+                success: function(data) {
+                    if (data.errors) {
+                        alert('Error: ' + JSON.stringify(data.errors));
+                    } else if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        hideCommentForm(postId, commentId);
+                        location.reload();
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
     });
 
     $(document).on('click', '.vote-button-post', function() {
@@ -383,7 +438,7 @@
                                     </div>
                                 </div>
                                 <p>${comment.content}</p>
-                            </div>
+                                
                         </div>`
                         commentsSection.append(commentElement);
                     });
@@ -396,8 +451,5 @@
         });
     }
 });
-
-
-
 </script>
 </html>

@@ -221,7 +221,7 @@ router.post('/vote', verifyToken, (req, res) => {
                     db.query(sql, [updatedScore, commentId], (err, updateScoreResult) => {
                         if (err) return res.status(500).json({ error: 'Database error.', details: err })
 
-                        return res.json({ newScore: updatedScore - 1})
+                        return res.json({ newScore: updatedScore})
                     });
                 });
             } else {
@@ -238,7 +238,7 @@ router.post('/vote', verifyToken, (req, res) => {
                     db.query(sql, [updatedScore, commentId], (err, updateScoreResult) => {
                         if (err) return res.status(500).json({ error: 'Database error.', details: err })
 
-                        return res.json({ newScore: updatedScore - 1 })
+                        return res.json({ newScore: updatedScore})
                     })
                 })
             }

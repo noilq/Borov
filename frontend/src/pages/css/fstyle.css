@@ -453,7 +453,7 @@ h2 {
     margin: 1px;
 }
 
-.vote-button-comment{
+.vote-button-comment, .comment-add-comment-button, .post-add-comment-button{
     background-color: #4CAF50;
     border: none;
     border-radius: 5px;
@@ -465,11 +465,11 @@ h2 {
     margin: 1px;
 }
 
-.vote-button:hover {
+.vote-button:hover, .vote-button-comment:hover, .vote-button-post:hover, .post-add-comment-button:hover, .show-comments-button:hover, .comment-add-comment-button:hover {
     background-color: #45a049;
 }
 
-.vote-button:active {
+.vote-button:active .vote-button-comment:active, .vote-button-post:active, .post-add-comment-button:active, .show-comments-button:active, .comment-add-comment-button:active{
     transform: scale(0.95);
 }
 
