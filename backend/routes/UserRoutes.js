@@ -48,7 +48,7 @@ router.get('/', (req, res) => {
 
 /** 
  * @swagger
- * /post/:
+ * /user/:
  *   post:
  *     summary: Returns user data.
  *     description: Returns user data by userd login.
@@ -136,7 +136,7 @@ router.post('/', verifyToken, (req, res) => {
 
 /** 
  * @swagger
- * /post/edit:
+ * /user/edit/:
  *   post:
  *     summary: Edits user data.
  *     description: Edits user by login.
@@ -195,7 +195,7 @@ router.post("/edit", verifyToken, editUserValidationChain(), (req, res) => {
 
 /** 
  * @swagger
- * /post/create:
+ * /user/create/:
  *   post:
  *     summary: Createы user.
  *     description: Createы user.
@@ -264,7 +264,7 @@ router.post('/create', createUserValidationChain(), (req, res) => {
 
 /** 
  * @swagger
- * /post/registration:
+ * /user/registration/:
  *   get:
  *     summary: Returns registration form.
  *     description: Returns registration form.
@@ -287,7 +287,7 @@ router.get('/registration', (req, res) => {
 
 /** 
  * @swagger
- * /post/settings:
+ * /user/settings/:
  *   get:
  *     summary: Returns settings form.
  *     description: Returns settings form.
@@ -308,7 +308,7 @@ router.get('/settings', (req, res) => {
 
 /** 
  * @swagger
- * /post/feed:
+ * /user/feed/:
  *   get:
  *     summary: Returns feed form.
  *     description: Returns feed form.
@@ -329,7 +329,7 @@ router.get('/feed', (req, res) => {
 
 /** 
  * @swagger
- * /post/login:
+ * /user/login/:
  *   post:
  *     summary: Login user.
  *     description: Returns auth tokens.
@@ -410,7 +410,7 @@ router.post('/login', loginUserValidationChain(),(req, res) => {
 
 /** 
  * @swagger
- * /get/login:
+ * /user/login/:
  *   get:
  *     summary: Returns login form.
  *     description: Returns login form.
@@ -430,7 +430,7 @@ router.get('/login', (req, res) => {
 
 /** 
  * @swagger
- * /get/profile:
+ * /user/profile/:
  *   get:
  *     summary: Returns profile form.
  *     description: Returns profile form.
@@ -450,7 +450,7 @@ router.get('/profile', (req, res) => {
 
 /** 
  * @swagger
- * /get/protected:
+ * /user/protected/:
  *   get:
  *     summary: Auth test endpoint.
  *     description: Auth test endpoint.

@@ -10,7 +10,7 @@ const path = require('path')
 
 /**
  * @swagger
- * /feed/feedPostsDate:
+ * /feed/feedPostsDate/:
  *   post:
  *     summary: Returns posts for feed.
  *     description: Returns feed posts from x to y, sorted by newest/oldest, optionally filtered by category.
@@ -111,7 +111,7 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
 
 /**
  * @swagger
- * /feed/feedPostsScore:
+ * /feed/feedPostsScore/:
  *   post:
  *     summary: Returns posts for feed.
  *     description: Returns feed posts from x to y, sorted by score, optionally filtered by category.
@@ -192,7 +192,7 @@ router.post('/feedPostsScore', verifyToken, (req, res) => {
 
 /**
  * @swagger
- * /feed/userPostsDate:
+ * /feed/userPostsDate/:
  *   post:
  *     summary: Returns user posts.
  *     description: Returns user posts from x to y, sorted by newest/oldest.
@@ -267,7 +267,7 @@ router.post('/userPostsDate', verifyToken, (req, res) => {
 
 /**
  * @swagger
- * /feed/userPostsScore:
+ * /feed/userPostsScore/:
  *   post:
  *     summary: Returns user posts.
  *     description: Returns user posts from x to y, sorted by score.
@@ -343,7 +343,7 @@ router.post('/userPostsScore', verifyToken, (req, res) => {
 
 /**
  * @swagger
- * CreateView:
+ * /feed - CreateView:
  *   get:
  *     summary: Create view for post.
  *     description: Create view for specific post.
@@ -398,6 +398,17 @@ router.get('/', (req, res) => {
     })
 })
 
+/** 
+ * @swagger
+ * /feed/public/profile-icon.png/:
+ *   get:
+ *     summary: Returns profile icon.
+ *     description: Returns profile icon.
+ */
+
+/**
+ * Returns profile icon я усейн болт.
+ */
 router.get('/public/profile-icon.png', (req, res) => {
     require("fs").readFile(path.join(__dirname, "../../frontend/src/pages/public/profile-icon.png"), function (err, data) {
             if(err) console.error(err)

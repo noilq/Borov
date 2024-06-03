@@ -12,6 +12,36 @@ const postValidationChain = () => [
         .isLength({ min: 0, max: 2500}).withMessage('Content must be less than 2500 characters long')
 ]
 
+/** 
+ * @swagger
+ * /post/unauthorized/:
+ *   get:
+ *     summary: Returns a post without authentication.
+ *     description: Returns the details of a post by post ID, without requiring user authenticationыыыыыыыыыыыыыыыыыыы сууа.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the post.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       404:
+ *         description: Post not found.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Returns a post without authentication.
+ * @param {string} id.query.required - The ID of the post.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 404 - Post not found.
+ * @returns {Error} 500 - Database error.
+ */
+
 router.get('/unauthorized', (req, res) => {
     const postId = req.query.id
 
@@ -23,6 +53,36 @@ router.get('/unauthorized', (req, res) => {
         res.json(result)
     })
 })
+
+/** 
+ * @swagger
+ * /post/:
+ *   get:
+ *     summary: Returns a post with authentication.
+ *     description: Returns the details of a post by post ID, requires authentication.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the post.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       404:
+ *         description: Post not found.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Returns a post with authentication.
+ * @param {string} id.query.required - The ID of the post.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 404 - Post not found.
+ * @returns {Error} 500 - Database error.
+ */
 
 router.get('/', verifyToken, (req, res) => {
     const postId = req.query.id
@@ -41,6 +101,25 @@ router.get('/', verifyToken, (req, res) => {
             return res.status(500).json({ error: 'Database error.' })
     })
 })
+
+/** 
+ * @swagger
+ * /post/allPosts/:
+ *   get:
+ *     summary: Returns all posts of the user.
+ *     description: Returns all posts created by the authenticated user with view and vote details.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Bad request.
+ */
+
+/**
+ * Returns all posts of the user.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Bad request.
+ */
 
 router.get('/allPosts', verifyToken, (req, res) => {
     const user = req.user
@@ -62,6 +141,7 @@ router.get('/allPosts', verifyToken, (req, res) => {
         }
     })
 })
+
 function GetPost(id, callback){
     const sql = `SELECT p.id, p.enrollment_date, p.title, p.content, 
     (SELECT IFNULL(SUM(v.value), 0) FROM votes v WHERE v.post_id = p.id) AS score, p.status_id, p.category_id, p.owner_id,
@@ -85,6 +165,47 @@ function CreateView(postId, userId, callback) {
     });
 }
 
+/** 
+ * @swagger
+ * /post/create/:
+ *   post:
+ *     summary: Creates a new post.
+ *     description: Creates a new post.
+ *     parameters:
+ *       - in: body
+ *         name: title
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Post title.
+ *       - in: body
+ *         name: content
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Post content.
+ *       - in: category_id
+ *         name: content
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Category id.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Validation error.
+ */
+
+/**
+ * Creates a new post.
+ * @param {string} title.body.required - Post title.
+ * @param {string} content.body.required - Post content.
+ * @param {integer} category_id.body.required - Category id.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Validation error.
+ */
+
 router.post('/create', verifyToken, postValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -104,6 +225,58 @@ router.post('/create', verifyToken, postValidationChain(), (req, res) => {
         return res.json(result)
     })
 })
+
+
+/** 
+ * @swagger
+ * /post/edit/:
+ *   post:
+ *     summary: Edits an existing post.
+ *     description: Edits an existing post.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the post.
+ *       - in: body
+ *         name: title
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: New post title.
+ *       - in: body
+ *         name: content
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: New post content.
+ *       - in: body
+ *         name: category_id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: New category ID.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Validation error.
+ *       404:
+ *         description: Post not found or not allowed.
+ */
+
+/**
+ * Edits an existing post.
+ * @param {string} id.query.required - Post ID.
+ * @param {string} title.body.required - New post title.
+ * @param {string} content.body.required - New post content.
+ * @param {integer} category_id.body.required - New category ID.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Validation error.
+ * @returns {Error} 404 - Post not found or not allowed.
+ */
 
 router.post('/edit', verifyToken, postValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
@@ -141,6 +314,34 @@ router.post('/edit', verifyToken, postValidationChain(), (req, res) => {
     })
 })
 
+
+/** 
+ * @swagger
+ * /post/delete/:
+ *   post:
+ *     summary: Deletes a post.
+ *     description: Deletes a post.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Post ID.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       404:
+ *         description: Post not found or not allowed.
+ */
+
+/**
+ * Deletes a post.
+ * @param {string} id.query.required - Post ID.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 404 - Post not found or not allowed.
+ */
+
 router.post('/delete', verifyToken, (req, res) => {
     const postId = req.query.id
     
@@ -169,6 +370,46 @@ router.post('/delete', verifyToken, (req, res) => {
         })
     })
 })
+
+/** 
+ * @swagger
+ * /post/vote/:
+ *   post:
+ *     summary: Votes on a post.
+ *     description: Votes on a post.
+ *     parameters:
+ *       - in: body
+ *         name: id
+ *         schema:
+ *           type: int
+ *         required: true
+ *         description: Post ID.
+ *       - in: body
+ *         name: value
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Vote value.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       400:
+ *         description: Wrong vote value.
+ *       404:
+ *         description: Post not found.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Votes on a post.
+ * @param {int} id.body.required - Post ID.
+ * @param {string} value.body.required - Vote value (1, 0, or -1).
+ * @returns {object} 200 - Success.
+ * @returns {Error} 400 - Wrong vote value.
+ * @returns {Error} 404 - Post not found.
+ * @returns {Error} 500 - Database error.
+ */
 
 router.post('/vote', verifyToken, (req, res) => {
     const postId = req.body.id
@@ -225,10 +466,15 @@ router.post('/vote', verifyToken, (req, res) => {
 
 /** 
  * @swagger
- * /get/getCategories:
+ * /post/getCategories/:
  *   get:
  *     summary: Returns all categories from db.
  *     description: Returns all categories from db.
+ *     responses:
+ *       200:
+ *         description: Success.
+ *       500:
+ *         description: Database error.
  */
 
 /**

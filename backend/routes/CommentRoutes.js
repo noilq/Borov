@@ -11,6 +11,36 @@ const commentValidationChain = () => [
         .isLength({ min: 0, max: 2500}).withMessage('Content must be less than 1000 characters long')
 ]
 
+/**
+ * @swagger
+ * /comment/:
+ *   get:
+ *     summary: Returns a comment by ID.
+ *     description: Returns a comment by ID.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Comment ID.
+ *     responses:
+ *       200:
+ *         description: Success. Returns the comment details.
+ *       404:
+ *         description: Comment not found.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Returns a comment by ID.
+ * @param {string} id.query.required - Comment ID.
+ * @returns {object} 200 - Success.
+ * @returns {Error} 404 - Comment not found.
+ * @returns {Error} 500 - Database error.
+ */
+
 router.get('/', verifyToken, (req, res) => {
     commId = req.query.id
 
@@ -24,6 +54,36 @@ router.get('/', verifyToken, (req, res) => {
         res.json(result[0])
     })
 })
+
+/**
+ * @swagger
+ * /comment/getCommentsChain/:
+ *   get:
+ *     summary: Returns all comments for a given post.
+ *     description: Returns all comments for a given post.
+ *     parameters:
+ *       - in: query
+ *         name: post_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Post ID.
+ *     responses:
+ *       200:
+ *         description: Success. Returns a list of comments.
+ *       404:
+ *         description: No comments found for the given post.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Returns all comments for a given post.
+ * @param {string} post_id.query.required - Post ID.
+ * @returns {Object[]} 200 - Success. Returns a list of comments.
+ * @returns {Error} 404 - No comments found for the given post.
+ * @returns {Error} 500 - Database error.
+ */
 
 router.get('/getCommentsChain', verifyToken, (req, res) => {
     post_id = req.query.post_id
@@ -58,6 +118,50 @@ router.get('/getCommentsChain', verifyToken, (req, res) => {
         res.json(results);
     });
 })
+
+/**
+ * @swagger
+ * /comment/create/:
+ *   post:
+ *     summary: Create a new comment.
+ *     description: Add a new comment to a post or as a reply to another comment.
+ *     parameters:
+ *       - in: body
+ *         name: content
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Content of the comment.
+ *       - in: body
+ *         name: comment_parent_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the parent comment.
+ *       - in: body
+ *         name: post_parent_id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the parent post.
+ *     responses:
+ *       200:
+ *         description: Success. Returns the created comment.
+ *       400:
+ *         description: Validation error or parent post/comment does not exist.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Add a new comment to a post or as a reply to another comment.
+ * @param {string} content.body.required - Content of the comment.
+ * @param {string} comment_parent_id.doby - ID of the parent comment.
+ * @param {string} post_parent_id.body.required - ID of the parent post.
+ * @returns {Object} 200 - Success. Returns the created comment.
+ * @returns {Error} 400 - Validation error or parent post/comment does not exist.
+ * @returns {Error} 500 - Database error.
+ */
 
 router.post('/create', verifyToken, commentValidationChain(), async (req, res) => {
     const validationErrors = validationResult(req)
@@ -101,6 +205,46 @@ router.post('/create', verifyToken, commentValidationChain(), async (req, res) =
     })
 })
 
+/**
+ * @swagger
+ * /comment/edit/:
+ *   post:
+ *     summary: Edit an existing comment.
+ *     description: Edit an existing comment.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Comment ID.
+ *       - in: body
+ *         name: content
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: New content.
+ *     responses:
+ *       200:
+ *         description: Success. Returns the updated comment.
+ *       400:
+ *         description: Validation error.
+ *       404:
+ *         description: Comment not found or not authorized to edit.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Edit an existing comment.
+ * @param {string} id.query.required - Comment ID.
+ * @param {string} conentd.body.required - New content.
+ * @returns {Object} 200 - Success. Returns the updated comment.
+ * @returns {Error} 400 - Validation error.
+ * @returns {Error} 404 - Comment not found or not authorized to edit.
+ * @returns {Error} 500 - Database error.
+ */
+
 router.post('/edit', verifyToken, commentValidationChain(), (req, res) => {
     const validationErrors = validationResult(req)
 
@@ -137,6 +281,36 @@ router.post('/edit', verifyToken, commentValidationChain(), (req, res) => {
         })
     })
 })
+
+/**
+ * @swagger
+ * /comment/delete/:
+ *   post:
+ *     summary: Delete a comment.
+ *     description: Deactivate a comment by changing its status.
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Comment ID.
+ *     responses:
+ *       200:
+ *         description: Success. Returns the result of the deletion.
+ *       404:
+ *         description: Comment not found or not authorized to delete.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Deactivate a comment by changing its status.
+ * @param {string} id.query.required - Comment ID.
+ * @returns {Object} 200 - Success. Returns the result of the deletion.
+ * @returns {String} 404 - Comment not found or not authorized to delete.
+ * @returns {String} 500 - Database error.
+ */
 
 router.post('/delete', verifyToken, (req, res) => {
     const commId = req.query.id
@@ -193,7 +367,48 @@ async function CommentExisting(postId, commId) {
     })
 }
 
+/**
+ * @swagger
+ * /comment/vote/:
+ *   post:
+ *     summary: Vote on a comment.
+ *     description: Vote on a comment by provided comment ID and vote value.
+ *     parameters:
+ *       - in: body
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Comment ID.
+ *       - in: body
+ *         name: value
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Vote value (`1`, `0`, `-1`).
+ *     responses:
+ *       200:
+ *         description: Success. Returns the new score of the comment.
+ *       400:
+ *         description: Wrong vote value.
+ *       404:
+ *         description: Comment not found.
+ *       500:
+ *         description: Database error.
+ */
+
+/**
+ * Vote on a comment by provided comment ID and vote value.
+ * @param {string} id.body.required - Comment ID.
+ * @param {string} value.body.required - Vote value (`1`, `0`, `-1`).
+ * @returns {Object} 200 - Success. Returns the new score of the comment.
+ * @returns {Error} 400 - Wrong vote value.
+ * @returns {Error} 404 - Comment not found.
+ * @returns {Error} 500 - Database error.
+ */
+
 router.post('/vote', verifyToken, (req, res) => {
+    //ЁБАНЫЙ РООООООООООООООООООООТ ПИЗДЕЕЦ
     const commentId = req.body.id
     const value = req.body.value
     const user = req.user
