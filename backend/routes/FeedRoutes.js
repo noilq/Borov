@@ -158,7 +158,7 @@ router.post('/feedPostsDate', verifyToken, (req, res) => {
  * @returns {Error} 500 - Server error.
  */
 router.post('/feedPostsScore', verifyToken, (req, res) => {
-    let { from, to, order, category } = req.query
+    let { from, to, order, category } = req.body
     
     if(order !== 'ASC') order = 'DESC'
 

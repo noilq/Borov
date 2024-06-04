@@ -59,16 +59,25 @@
     let currCategory = "General";
     let currCategoryId = "1";
     let currOrder = "DESC";
+    let currFeedOrder = "feedPostsDate";
     let postsPosition = 0;
 
     function handleNewestOption() {
         currOrder = "DESC";
+        currFeedOrder = "feedPostsDate";
+        const threadsContainer = $('#threads');
+        threadsContainer.empty();
+        postsPosition = 0;
         updateThreads(0, 10);
         $('#toggleButton').text('Newest');
     }
 
     function handleBestOption() {
-        currOrder = "ASC";
+        currOrder = "DESC";
+        currFeedOrder = "feedPostsScore";
+        const threadsContainer = $('#threads');
+        threadsContainer.empty();
+        postsPosition = 0;
         updateThreads(0, 10);
         $('#toggleButton').text('Best');
     }
@@ -166,9 +175,9 @@
 
     function updateThreads(from = 0, to = 10) {
         const refreshToken = localStorage.getItem('refreshToken');
-        
+        console.log(currFeedOrder)
         $.ajax({
-            url: '/feed/feedPostsDate',
+            url: `/feed/${currFeedOrder}`,
             type: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`
@@ -233,6 +242,9 @@
             currCategory = categoryName;
             currCategoryId = categoryId;
             $("#categoryName").text(currCategory);
+            const threadsContainer = $('#threads');
+            threadsContainer.empty();
+            postsPosition = 0;
             updateThreads(0, 10);
         }
 
